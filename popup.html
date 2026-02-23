@@ -3,46 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Polyox Agent</title>
+  <title>PolyOx Agent</title>
   <link rel="stylesheet" href="popup.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
   <div class="container">
     <!-- Header -->
     <header class="header">
       <div class="logo">
-        <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
-          <path d="M14 2L26 14L14 26L2 14L14 2Z" fill="url(#grad)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
-          <path d="M14 6L22 14L14 22L6 14L14 6Z" fill="rgba(255,255,255,0.15)"/>
-          <defs><linearGradient id="grad" x1="2" y1="2" x2="26" y2="26"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2C12 2 8.5 6 8.5 9.5C8.5 11 9 12 10 13L8 16H10.5L12 13.5L13.5 16H16L14 13C15 12 15.5 11 15.5 9.5C15.5 6 12 2 12 2Z" fill="#00FF41"/>
+          <circle cx="10.5" cy="9" r="1" fill="#070707"/>
+          <circle cx="13.5" cy="9" r="1" fill="#070707"/>
         </svg>
-        <span class="logo-text">Polyox</span>
+        <span class="logo-text">Poly<span class="logo-green">Ox</span></span>
       </div>
       <div class="header-right">
         <span class="wallet-pill hidden" id="walletPill">
           <span class="wallet-dot"></span>
           <span class="wallet-addr" id="walletAddr">—</span>
         </span>
-        <button class="connect-pill" id="connectBtn">Connect</button>
+        <button class="connect-btn" id="connectBtn">Connect Wallet</button>
       </div>
     </header>
 
+    <!-- Divider -->
+    <div class="divider"></div>
+
     <!-- Game Card -->
-    <div class="card game-card" id="gameCard">
+    <div class="card" id="gameCard">
       <div class="no-game" id="noGame">
         <div class="no-game-icon">🏀</div>
-        <p>Navigate to a <strong>Polymarket NBA game</strong> to get started</p>
+        <p>Navigate to a <span class="green">Polymarket NBA game</span> to get started</p>
       </div>
       <div class="game-info hidden" id="gameInfo">
+        <div class="card-label">DETECTED MATCHUP</div>
         <div class="matchup">
           <div class="team">
             <span class="team-abbr" id="awayTeam">—</span>
             <span class="team-label">AWAY</span>
           </div>
-          <div class="vs-badge">VS</div>
+          <div class="vs-badge">vs</div>
           <div class="team">
             <span class="team-abbr" id="homeTeam">—</span>
             <span class="team-label">HOME</span>
@@ -54,18 +58,18 @@
 
     <!-- Analyze Button -->
     <button class="btn btn-primary hidden" id="analyzeBtn">
-      <span class="btn-content">⚡ Analyze with AI</span>
+      <span class="btn-content">⚡ Run Analysis</span>
     </button>
 
     <!-- Payment Info -->
     <div class="payment-note hidden" id="paymentNote">
-      Powered by <strong>x402</strong> — pays with Base Sepolia USDC
+      x402 • Base Sepolia USDC
     </div>
 
     <!-- Analysis Result -->
     <div class="card result-card hidden" id="resultCard">
       <div class="result-header">
-        <span class="result-title">🧠 AI Analysis</span>
+        <span class="result-label">ANALYSIS OUTPUT</span>
       </div>
       <div class="result-body" id="resultBody"></div>
     </div>
@@ -77,7 +81,7 @@
 
     <!-- Footer -->
     <footer class="footer">
-      <span>Powered by <strong>viem</strong> + <strong>x402</strong></span>
+      <span>PolyOx: <span class="green">Hoops</span> • x402</span>
     </footer>
   </div>
 
