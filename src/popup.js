@@ -1,32 +1,23 @@
-import { formatEther } from 'viem';
+// ─── Popup UI ───
+// Thin UI layer: reads persisted state, sends commands to background worker.
 
-// ─── DOM Elements ───
-const statusDot = document.getElementById('statusDot');
-const statusText = document.getElementById('statusText');
-const networkBadge = document.getElementById('networkBadge');
-const walletCard = document.getElementById('walletCard');
-const addressText = document.getElementById('addressText');
-const balanceText = document.getElementById('balanceText');
+// ─── DOM ───
+const walletPill = document.getElementById('walletPill');
+const walletAddr = document.getElementById('walletAddr');
 const connectBtn = document.getElementById('connectBtn');
-const signBtn = document.getElementById('signBtn');
-const signatureCard = document.getElementById('signatureCard');
-const signatureText = document.getElementById('signatureText');
-const copyBtn = document.getElementById('copyBtn');
+const noGame = document.getElementById('noGame');
+const gameInfo = document.getElementById('gameInfo');
+const awayTeam = document.getElementById('awayTeam');
+const homeTeam = document.getElementById('homeTeam');
+const gameDate = document.getElementById('gameDate');
+const analyzeBtn = document.getElementById('analyzeBtn');
+const paymentNote = document.getElementById('paymentNote');
+const resultCard = document.getElementById('resultCard');
+const resultBody = document.getElementById('resultBody');
+const errorCard = document.getElementById('errorCard');
+const errorText = document.getElementById('errorText');
 
-// ─── Chain ID → Name map ───
-const CHAIN_NAMES = {
-  1: 'Mainnet',
-  5: 'Goerli',
-  11155111: 'Sepolia',
-  137: 'Polygon',
-  42161: 'Arbitrum',
-  10: 'Optimism',
-  8453: 'Base',
-  56: 'BSC',
-  43114: 'Avalanche',
-};
-
-// ─── Send message to background service worker ───
+// ─── Messaging ───
 function sendMsg(payload) {
   return new Promise((resolve, reject) => {
     chrome.runtime.sendMessage(payload, (response) => {
@@ -44,17 +35,26 @@ function sendMsg(payload) {
 }
 
 // ─── Helpers ───
-function setStatus(state, text) {
-  statusDot.className = `status-dot ${state}`;
-  statusText.textContent = text;
+function show(el) { el.classList.remove('hidden'); }
+function hide(el) { el.classList.add('hidden'); }
+
+function truncateAddr(addr) {
+  if (!addr) return '—';
+  return addr.slice(0, 6) + '…' + addr.slice(-4);
 }
 
-function showElement(el) {
-  el.classList.remove('hidden');
-}
-
-function hideElement(el) {
-  el.classList.add('hidden');
+function formatDate(dateStr) {
+  try {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch {
+    return dateStr;
+  }
 }
 
 function setLoading(btn, loading) {
@@ -67,137 +67,153 @@ function setLoading(btn, loading) {
   }
 }
 
-function formatBalance(balanceHex) {
-  const formatted = formatEther(BigInt(balanceHex));
-  const num = parseFloat(formatted);
-  return num < 0.000001 && num > 0
-    ? '< 0.000001'
-    : num.toFixed(6).replace(/\.?0+$/, '') || '0';
+// ─── Render analysis result ───
+function renderResult(data) {
+  hide(errorCard);
+
+  // The API might return various shapes. Handle common ones.
+  let content = '';
+
+  if (typeof data === 'string') {
+    content = data;
+  } else if (data?.analysis) {
+    content = data.analysis;
+  } else if (data?.result) {
+    content = typeof data.result === 'string' ? data.result : JSON.stringify(data.result, null, 2);
+  } else if (data?.prediction) {
+    content = data.prediction;
+  } else {
+    content = JSON.stringify(data, null, 2);
+  }
+
+  // Simple markdown-like rendering
+  resultBody.innerHTML = content
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/### (.+)/g, '<h3>$1</h3>')
+    .replace(/## (.+)/g, '<h2>$1</h2>')
+    .replace(/# (.+)/g, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+
+  show(resultCard);
 }
 
-function getChainName(chainIdHex) {
-  const chainId = parseInt(chainIdHex, 16);
-  return CHAIN_NAMES[chainId] || `Chain ${chainId}`;
+function showError(msg) {
+  hide(resultCard);
+  errorText.textContent = msg;
+  show(errorCard);
 }
 
-// ─── Render connected state ───
-function renderConnected(state) {
-  setStatus('connected', 'Connected');
-  addressText.textContent = state.address;
-
-  if (state.balanceHex) {
-    balanceText.textContent = formatBalance(state.balanceHex);
+// ─── Render state ───
+function renderState(state) {
+  // Wallet
+  if (state.connected && state.address) {
+    hide(connectBtn);
+    walletAddr.textContent = truncateAddr(state.address);
+    show(walletPill);
+  } else {
+    hide(walletPill);
+    show(connectBtn);
   }
 
-  if (state.chainIdHex) {
-    networkBadge.textContent = getChainName(state.chainIdHex);
+  // Game
+  if (state.game) {
+    awayTeam.textContent = state.game.away;
+    homeTeam.textContent = state.game.home;
+    gameDate.textContent = formatDate(state.game.date);
+    hide(noGame);
+    show(gameInfo);
+
+    // Show analyze button if wallet connected
+    if (state.connected) {
+      show(analyzeBtn);
+      show(paymentNote);
+    } else {
+      hide(analyzeBtn);
+      hide(paymentNote);
+    }
+  } else {
+    show(noGame);
+    hide(gameInfo);
+    hide(analyzeBtn);
+    hide(paymentNote);
   }
 
-  showElement(walletCard);
-  showElement(signBtn);
-  hideElement(connectBtn);
-
-  if (state.signature) {
-    signatureText.textContent = state.signature;
-    showElement(signatureCard);
+  // Analysis result
+  if (state.analysisResult) {
+    renderResult(state.analysisResult);
   }
 
-  if (state.signing) {
-    setLoading(signBtn, true);
+  if (state.analysisError) {
+    showError(state.analysisError);
+  }
+
+  if (state.analyzing) {
+    setLoading(analyzeBtn, true);
   }
 }
 
-// ─── Init: restore state from background ───
+// ─── Init ───
 async function init() {
   try {
     const state = await sendMsg({ action: 'getState' });
+    renderState(state);
 
-    if (state.connected && state.address) {
-      // Restore previously connected state
-      renderConnected(state);
-      return;
-    }
-
-    // Not connected yet — detect wallet
-    const detected = await sendMsg({ action: 'detect' });
-
-    if (detected) {
-      setStatus('detected', 'Ethereum wallet detected');
-      connectBtn.querySelector('.btn-content').textContent = 'Connect Wallet';
-    } else {
-      setStatus('error', 'No Ethereum wallet detected');
-      connectBtn.querySelector('.btn-content').textContent = 'Install MetaMask';
-      connectBtn.onclick = () => window.open('https://metamask.io/download/', '_blank');
+    // Try to detect wallet if not connected
+    if (!state.connected) {
+      try {
+        await sendMsg({ action: 'detect' });
+      } catch {
+        // Might be on a chrome:// page, that's fine
+      }
     }
   } catch (err) {
-    setStatus('error', err.message || 'Cannot detect wallet');
-    connectBtn.querySelector('.btn-content').textContent = 'Open a webpage first';
-    connectBtn.disabled = true;
+    console.error('Init error:', err);
   }
 }
 
-// ─── Connect ───
-async function connectWallet() {
-  setLoading(connectBtn, true);
+// ─── Connect wallet ───
+connectBtn.addEventListener('click', async () => {
+  connectBtn.classList.add('loading');
+  connectBtn.disabled = true;
+
   try {
     const result = await sendMsg({ action: 'connect' });
-    renderConnected({
-      connected: true,
-      address: result.address,
-      balanceHex: result.balanceHex,
-      chainIdHex: result.chainIdHex,
-    });
-  } catch (err) {
-    console.error('Connection error:', err);
-    if (err.message?.includes('4001') || err.message?.includes('rejected')) {
-      setStatus('error', 'Connection rejected by user');
-    } else {
-      setStatus('error', err.message || 'Connection failed');
-    }
-  } finally {
-    setLoading(connectBtn, false);
-  }
-}
+    hide(connectBtn);
+    walletAddr.textContent = truncateAddr(result.address);
+    show(walletPill);
 
-// ─── Sign ───
-async function signMessage() {
-  setLoading(signBtn, true);
-  try {
+    // Show analyze if game is detected
     const state = await sendMsg({ action: 'getState' });
-    const message = `Hello from Polyox!\n\nTimestamp: ${new Date().toISOString()}\nAddress: ${state.address}`;
-
-    const signature = await sendMsg({
-      action: 'sign',
-      address: state.address,
-      signMessage: message,
-    });
-
-    signatureText.textContent = signature;
-    showElement(signatureCard);
-  } catch (err) {
-    console.error('Signing error:', err);
-    if (!err.message?.includes('4001') && !err.message?.includes('rejected')) {
-      signatureText.textContent = `Error: ${err.message}`;
-      showElement(signatureCard);
+    if (state.game) {
+      show(analyzeBtn);
+      show(paymentNote);
     }
+  } catch (err) {
+    showError(err.message);
   } finally {
-    setLoading(signBtn, false);
+    connectBtn.classList.remove('loading');
+    connectBtn.disabled = false;
   }
-}
-
-// ─── Copy Address ───
-copyBtn.addEventListener('click', () => {
-  const addr = addressText.textContent;
-  if (!addr || addr === '—') return;
-  navigator.clipboard.writeText(addr).then(() => {
-    copyBtn.classList.add('copied');
-    setTimeout(() => copyBtn.classList.remove('copied'), 1500);
-  });
 });
 
-// ─── Event Listeners ───
-connectBtn.addEventListener('click', connectWallet);
-signBtn.addEventListener('click', signMessage);
+// ─── Analyze ───
+analyzeBtn.addEventListener('click', async () => {
+  setLoading(analyzeBtn, true);
+  hide(errorCard);
+  hide(resultCard);
+
+  try {
+    const result = await sendMsg({ action: 'analyze' });
+    renderResult(result);
+  } catch (err) {
+    showError(err.message);
+  } finally {
+    setLoading(analyzeBtn, false);
+  }
+});
 
 // ─── Start ───
 init();

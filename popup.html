@@ -3,75 +3,81 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Polyox Wallet</title>
+  <title>Polyox Agent</title>
   <link rel="stylesheet" href="popup.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
   <div class="container">
     <!-- Header -->
     <header class="header">
       <div class="logo">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
           <path d="M14 2L26 14L14 26L2 14L14 2Z" fill="url(#grad)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
           <path d="M14 6L22 14L14 22L6 14L14 6Z" fill="rgba(255,255,255,0.15)"/>
           <defs><linearGradient id="grad" x1="2" y1="2" x2="26" y2="26"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs>
         </svg>
         <span class="logo-text">Polyox</span>
       </div>
-      <span class="badge" id="networkBadge">Mainnet</span>
+      <div class="header-right">
+        <span class="wallet-pill hidden" id="walletPill">
+          <span class="wallet-dot"></span>
+          <span class="wallet-addr" id="walletAddr">—</span>
+        </span>
+        <button class="connect-pill" id="connectBtn">Connect</button>
+      </div>
     </header>
 
-    <!-- Status Card -->
-    <div class="card" id="statusCard">
-      <div class="status-row">
-        <span class="status-dot" id="statusDot"></span>
-        <span class="status-text" id="statusText">Detecting wallet…</span>
+    <!-- Game Card -->
+    <div class="card game-card" id="gameCard">
+      <div class="no-game" id="noGame">
+        <div class="no-game-icon">🏀</div>
+        <p>Navigate to a <strong>Polymarket NBA game</strong> to get started</p>
       </div>
-    </div>
-
-    <!-- Wallet Info (hidden until connected) -->
-    <div class="card wallet-card hidden" id="walletCard">
-      <div class="info-group">
-        <label class="label">Address</label>
-        <div class="address-row">
-          <span class="address mono" id="addressText">—</span>
-          <button class="copy-btn" id="copyBtn" title="Copy address">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-          </button>
+      <div class="game-info hidden" id="gameInfo">
+        <div class="matchup">
+          <div class="team">
+            <span class="team-abbr" id="awayTeam">—</span>
+            <span class="team-label">AWAY</span>
+          </div>
+          <div class="vs-badge">VS</div>
+          <div class="team">
+            <span class="team-abbr" id="homeTeam">—</span>
+            <span class="team-label">HOME</span>
+          </div>
         </div>
-      </div>
-      <div class="divider"></div>
-      <div class="info-group">
-        <label class="label">Balance</label>
-        <div class="balance-row">
-          <span class="balance" id="balanceText">—</span>
-          <span class="balance-unit">ETH</span>
-        </div>
+        <div class="game-date" id="gameDate">—</div>
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="actions">
-      <button class="btn btn-primary" id="connectBtn">
-        <span class="btn-content">Connect Wallet</span>
-      </button>
-      <button class="btn btn-secondary hidden" id="signBtn">
-        <span class="btn-content">✍️ Sign Message</span>
-      </button>
+    <!-- Analyze Button -->
+    <button class="btn btn-primary hidden" id="analyzeBtn">
+      <span class="btn-content">⚡ Analyze with AI</span>
+    </button>
+
+    <!-- Payment Info -->
+    <div class="payment-note hidden" id="paymentNote">
+      Powered by <strong>x402</strong> — pays with Base Sepolia USDC
     </div>
 
-    <!-- Signature Result (hidden until signed) -->
-    <div class="card signature-card hidden" id="signatureCard">
-      <label class="label">Signature</label>
-      <div class="signature-box mono" id="signatureText"></div>
+    <!-- Analysis Result -->
+    <div class="card result-card hidden" id="resultCard">
+      <div class="result-header">
+        <span class="result-title">🧠 AI Analysis</span>
+      </div>
+      <div class="result-body" id="resultBody"></div>
+    </div>
+
+    <!-- Error -->
+    <div class="card error-card hidden" id="errorCard">
+      <span class="error-text" id="errorText"></span>
     </div>
 
     <!-- Footer -->
     <footer class="footer">
-      <span>Powered by <strong>viem</strong></span>
+      <span>Powered by <strong>viem</strong> + <strong>x402</strong></span>
     </footer>
   </div>
 

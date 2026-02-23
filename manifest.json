@@ -1,16 +1,26 @@
 {
   "manifest_version": 3,
-  "name": "Polyox — Ethereum Wallet Demo",
-  "version": "1.0.0",
-  "description": "Detect Ethereum wallets, view address & balance, and sign messages.",
+  "name": "Polyox — NBA Agent",
+  "version": "2.0.0",
+  "description": "AI-powered NBA game analysis on Polymarket, paid via x402.",
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Polyox Wallet"
+    "default_title": "Polyox Agent"
   },
   "background": {
     "service_worker": "dist/background.js",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": ["https://polymarket.com/*"],
+      "js": ["dist/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "https://api-hoobs.polyox.io/*"
+  ],
   "icons": {}
 }

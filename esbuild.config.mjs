@@ -2,10 +2,8 @@ import { build, context } from 'esbuild';
 
 const isWatch = process.argv.includes('--watch');
 
-const entryPoints = ['src/popup.js', 'src/background.js'];
-
 const config = {
-  entryPoints,
+  entryPoints: ['src/popup.js', 'src/background.js', 'src/content.js'],
   bundle: true,
   outdir: 'dist',
   format: 'iife',
@@ -20,5 +18,5 @@ if (isWatch) {
   console.log('👀 Watching for changes...');
 } else {
   await build(config);
-  console.log('✅ Build complete → dist/popup.js, dist/background.js');
+  console.log('✅ Build complete → dist/');
 }

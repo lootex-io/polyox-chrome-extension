@@ -1,9 +1,27 @@
 // ─── Background Service Worker ───
-// Handles all ethereum interactions via chrome.scripting.executeScript.
-// This survives popup closure (e.g. when MetaMask steals focus).
-// State is persisted in chrome.storage.session so the popup can restore on reopen.
+// Handles: game detection, wallet interactions, x402 payment flow.
+// All state persisted in chrome.storage.session so popup can restore.
 
-// ─── Execute in page's main world ───
+import { setIconActive } from './icons.js';
+
+// ─── Constants ───
+const API_BASE = 'https://api-hoobs.polyox.io';
+const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
+const BASE_SEPOLIA_CHAIN_ID = 84532;
+
+// ─── State helpers ───
+async function getState() {
+  return (await chrome.storage.session.get('widgetState'))?.widgetState || {};
+}
+
+async function saveState(updates) {
+  const current = await getState();
+  const newState = { ...current, ...updates };
+  await chrome.storage.session.set({ widgetState: newState });
+  return newState;
+}
+
+// ─── Execute code in the page's main world ───
 async function executeInPage(tabId, func, args = []) {
   const results = await chrome.scripting.executeScript({
     target: { tabId },
@@ -11,15 +29,19 @@ async function executeInPage(tabId, func, args = []) {
     func,
     args,
   });
-
-  if (results[0]?.error) {
-    throw new Error(results[0].error.message);
-  }
-
+  if (results[0]?.error) throw new Error(results[0].error.message);
   return results[0]?.result;
 }
 
-// ─── Get active tab ───
+function safeBase64Encode(data) {
+  if (typeof globalThis !== "undefined" && typeof globalThis.btoa === "function") {
+    const bytes = new TextEncoder().encode(data);
+    const binaryString = Array.from(bytes, byte => String.fromCharCode(byte)).join("");
+    return globalThis.btoa(binaryString);
+  }
+  return Buffer.from(data, "utf8").toString("base64");
+}
+
 async function getActiveTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (!tab || tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
@@ -28,34 +50,44 @@ async function getActiveTab() {
   return tab;
 }
 
-// ─── Save state ───
-async function saveState(updates) {
-  const current = (await chrome.storage.session.get('walletState'))?.walletState || {};
-  await chrome.storage.session.set({
-    walletState: { ...current, ...updates },
-  });
-}
-
 // ─── Message handler ───
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  handleMessage(message)
+  handleMessage(message, sender)
     .then((result) => sendResponse({ success: true, data: result }))
     .catch((err) => sendResponse({ success: false, error: err.message }));
-
-  // Return true to indicate async response
-  return true;
+  return true; // async
 });
 
-async function handleMessage(message) {
+async function handleMessage(message, sender) {
   const { action } = message;
 
   switch (action) {
+    // ── Game detection (from content script) ──
+    case 'detect-game': {
+      const { game } = message;
+      await saveState({ game, analysisResult: null });
+      setIconActive(true);
+
+      // Set badge
+      chrome.action.setBadgeText({ text: 'NBA' });
+      chrome.action.setBadgeBackgroundColor({ color: '#6366f1' });
+      return true;
+    }
+
+    case 'clear-game': {
+      await saveState({ game: null, analysisResult: null });
+      setIconActive(false);
+      chrome.action.setBadgeText({ text: '' });
+      return true;
+    }
+
+    // ── Wallet ──
     case 'detect': {
       const tab = await getActiveTab();
       const hasWallet = await executeInPage(tab.id, () => {
         return typeof window.ethereum !== 'undefined';
       });
-      await saveState({ detected: hasWallet, tabId: tab.id });
+      await saveState({ walletDetected: hasWallet, tabId: tab.id });
       return hasWallet;
     }
 
@@ -64,87 +96,43 @@ async function handleMessage(message) {
       const accounts = await executeInPage(tab.id, () => {
         return window.ethereum.request({ method: 'eth_requestAccounts' });
       });
-
-      if (!accounts || accounts.length === 0) {
-        throw new Error('No accounts returned');
-      }
+      if (!accounts?.length) throw new Error('No accounts returned');
 
       const address = accounts[0];
-
-      // Fetch chain ID
       const chainIdHex = await executeInPage(tab.id, () => {
         return window.ethereum.request({ method: 'eth_chainId' });
       });
 
-      // Fetch balance
-      const balanceHex = await executeInPage(tab.id, (addr) => {
-        return window.ethereum.request({
-          method: 'eth_getBalance',
-          params: [addr, 'latest'],
-        });
-      }, [address]);
-
-      await saveState({
-        connected: true,
-        address,
-        balanceHex,
-        chainIdHex,
-        signature: null,
-      });
-
-      return { address, balanceHex, chainIdHex };
+      await saveState({ connected: true, address, chainIdHex });
+      return { address, chainIdHex };
     }
 
-    case 'sign': {
-      const state = (await chrome.storage.session.get('walletState'))?.walletState;
-      if (!state?.address) throw new Error('Not connected');
+    // ── Analysis with x402 payment ──
+    case 'analyze': {
+      const state = await getState();
+      if (!state.game) throw new Error('No game detected');
+      if (!state.address) throw new Error('Connect wallet first');
 
-      const tab = await getActiveTab();
-      const { address, signMessage: msg } = message;
+      await saveState({ analyzing: true, analysisResult: null, analysisError: null });
 
-      // Mark signing in progress
-      await saveState({ signing: true });
-
-      const signature = await executeInPage(tab.id, (addr, m) => {
-        const hex =
-          '0x' +
-          Array.from(new TextEncoder().encode(m))
-            .map((b) => b.toString(16).padStart(2, '0'))
-            .join('');
-        return window.ethereum.request({
-          method: 'personal_sign',
-          params: [hex, addr],
-        });
-      }, [address, msg]);
-
-      await saveState({ signature, signing: false });
-
-      return signature;
+      try {
+        const result = await performAnalysis(state);
+        await saveState({ analyzing: false, analysisResult: result });
+        return result;
+      } catch (err) {
+        await saveState({ analyzing: false, analysisError: err.message });
+        throw err;
+      }
     }
 
-    case 'refreshBalance': {
-      const state = (await chrome.storage.session.get('walletState'))?.walletState;
-      if (!state?.address) throw new Error('Not connected');
-
-      const tab = await getActiveTab();
-      const balanceHex = await executeInPage(tab.id, (addr) => {
-        return window.ethereum.request({
-          method: 'eth_getBalance',
-          params: [addr, 'latest'],
-        });
-      }, [state.address]);
-
-      await saveState({ balanceHex });
-      return balanceHex;
-    }
-
+    // ── State ──
     case 'getState': {
-      const state = (await chrome.storage.session.get('walletState'))?.walletState;
-      return state || {};
+      return await getState();
     }
 
     case 'disconnect': {
-      await chrome.storage.session.remove('walletState');
+      const state = await getState();
+      await saveState({ connected: false, address: null, chainIdHex: null });
       return true;
     }
 
@@ -152,3 +140,223 @@ async function handleMessage(message) {
       throw new Error(`Unknown action: ${action}`);
   }
 }
+
+// ─── x402 Analysis Flow ───
+async function performAnalysis(state) {
+  const { game, address } = state;
+  const body = JSON.stringify({
+    date: game.date,
+    home: game.home,
+    away: game.away,
+  });
+
+  // Step 1: Send initial request → expect 402
+  const res402 = await fetch(`${API_BASE}/nba/analysis`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+  });
+
+  // If it's not 402, maybe it's free or an error
+  if (res402.ok) {
+    return await res402.json();
+  }
+
+  if (res402.status !== 402) {
+    const errText = await res402.text().catch(() => '');
+    throw new Error(`API returned ${res402.status}: ${errText}`);
+  }
+
+  // Step 2: Parse 402 response (x402 v2 format)
+  // The payment requirements may come from a header or the response body
+  let paymentReq;
+  const paymentRequiredHeader = res402.headers.get('payment-required');
+  if (paymentRequiredHeader) {
+    paymentReq = JSON.parse(atob(paymentRequiredHeader));
+  } else {
+    // x402 v2: requirements are in the response body
+    paymentReq = await res402.json();
+  }
+
+  // x402 v2: payment details are in accepts[0]
+  if (!paymentReq.accepts || !paymentReq.accepts.length) {
+    throw new Error(`No accepted payment methods: ${JSON.stringify(paymentReq)}`);
+  }
+
+  console.log(paymentReq)
+
+  const accept = paymentReq.accepts[0];
+  const payTo = accept.payTo;
+  const amount = accept.amount;
+  const asset = accept.asset || USDC_ADDRESS;
+  const maxTimeout = accept.maxTimeoutSeconds || 300;
+  const usdcName = accept.extra?.name || 'USD Coin';
+  const usdcVersion = accept.extra?.version || '2';
+
+  // Step 3: Sign EIP-712 TransferWithAuthorization via MetaMask
+  const tab = await getActiveTab();
+
+  // Generate a random nonce (bytes32) — client-side for x402 v2
+  const nonceBytes = new Uint8Array(32);
+  crypto.getRandomValues(nonceBytes);
+  const nonce = '0x' + Array.from(nonceBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+
+  const validAfter = 0;
+  const validBefore = Math.floor(Date.now() / 1000) + maxTimeout;
+
+  // Build the full typedData string here in the background,
+  // so the injected function is a simple one-liner (like connect).
+  const typedData = JSON.stringify({
+    types: {
+      EIP712Domain: [
+        { name: 'name', type: 'string' },
+        { name: 'version', type: 'string' },
+        { name: 'chainId', type: 'uint256' },
+        { name: 'verifyingContract', type: 'address' },
+      ],
+      TransferWithAuthorization: [
+        { name: 'from', type: 'address' },
+        { name: 'to', type: 'address' },
+        { name: 'value', type: 'uint256' },
+        { name: 'validAfter', type: 'uint256' },
+        { name: 'validBefore', type: 'uint256' },
+        { name: 'nonce', type: 'bytes32' },
+      ],
+    },
+    primaryType: 'TransferWithAuthorization',
+    domain: {
+      name: usdcName,
+      version: usdcVersion,
+      chainId: BASE_SEPOLIA_CHAIN_ID,
+      verifyingContract: asset,
+    },
+    message: {
+      from: address,
+      to: payTo,
+      value: String(amount),
+      validAfter: validAfter,
+      validBefore: validBefore,
+      nonce: nonce,
+    },
+  });
+
+  // chrome.scripting.executeScript with world:'MAIN' does NOT properly
+  // await Promises that require user interaction (MetaMask popup).
+  // Workaround: fire-and-forget to start the request, then poll for the result.
+
+  // Step A: Fire-and-forget — kick off the MetaMask signing.
+  // This function is SYNCHRONOUS (returns undefined immediately).
+  // MetaMask will open its popup in the background.
+  await executeInPage(tab.id, (signer, data) => {
+    // Clear any previous result
+    window.__polyoxSignResult = null;
+
+    window.ethereum
+      .request({
+        method: 'eth_signTypedData_v4',
+        params: [signer, data],
+      })
+      .then((sig) => {
+        window.__polyoxSignResult = { signature: sig };
+      })
+      .catch((err) => {
+        window.__polyoxSignResult = { error: err.message || String(err) };
+      });
+
+    // Return immediately — don't wait for MetaMask
+    return 'started';
+  }, [address, typedData]);
+
+  // Step B: Poll for the result every 500ms (up to 5 minutes)
+  const signature = await new Promise((resolve, reject) => {
+    let attempts = 0;
+    const maxAttempts = 600; // 5 minutes
+
+    const poll = async () => {
+      attempts++;
+      try {
+        const result = await executeInPage(tab.id, () => {
+          return window.__polyoxSignResult;
+        });
+
+        if (result) {
+          if (result.error) {
+            reject(new Error(result.error));
+          } else {
+            resolve(result.signature);
+          }
+          return;
+        }
+      } catch (err) {
+        reject(err);
+        return;
+      }
+
+      if (attempts >= maxAttempts) {
+        reject(new Error('Signing timed out'));
+        return;
+      }
+
+      setTimeout(poll, 500);
+    };
+
+    poll();
+  });
+
+  if (!signature) {
+    throw new Error('Signing failed — no signature returned');
+  }
+
+  // Step 4: Build payment payload and retry
+  const paymentPayload = {
+    x402Version: 2,
+    accepted: {
+      scheme: 'exact',
+      network: 'eip155:84532',
+      payTo,
+      amount,
+      asset,
+      maxTimeoutSeconds: maxTimeout,
+      extra: {
+        name: usdcName,
+        version: usdcVersion,
+      },
+    },
+    payload: {
+      signature,
+      authorization: {
+        from: address,
+        to: payTo,
+        value: String(amount),
+        validAfter: String(validAfter),
+        validBefore: String(validBefore),
+        nonce: String(nonce),
+      },
+    },
+  };
+
+  console.log(paymentPayload)
+
+  const paymentSigHeader = safeBase64Encode(JSON.stringify(paymentPayload));
+
+  console.log(paymentSigHeader)
+
+  const resAnalysis = await fetch(`${API_BASE}/nba/analysis`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Payment-Signature': paymentSigHeader,
+    },
+    body,
+  });
+
+  if (!resAnalysis.ok) {
+    const errText = await resAnalysis.text().catch(() => '');
+    throw new Error(`Analysis request failed (${resAnalysis.status}): ${errText}`);
+  }
+
+  return await resAnalysis.json();
+}
+
+// ─── Init: set icon to inactive ───
+setIconActive(false);
