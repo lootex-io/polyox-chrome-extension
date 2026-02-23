@@ -66,17 +66,17 @@ async function handleMessage(message, sender) {
     case 'detect-game': {
       const { game } = message;
       await saveState({ game, analysisResult: null });
-      setIconActive(true);
+      await setIconActive(true);
 
       // Set badge
       chrome.action.setBadgeText({ text: 'NBA' });
-      chrome.action.setBadgeBackgroundColor({ color: '#6366f1' });
+      chrome.action.setBadgeBackgroundColor({ color: '#00FF41' });
       return true;
     }
 
     case 'clear-game': {
       await saveState({ game: null, analysisResult: null });
-      setIconActive(false);
+      await setIconActive(false);
       chrome.action.setBadgeText({ text: '' });
       return true;
     }
@@ -359,4 +359,4 @@ async function performAnalysis(state) {
 }
 
 // ─── Init: set icon to inactive ───
-setIconActive(false);
+setIconActive(false); // fire-and-forget on init
