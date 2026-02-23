@@ -1,6 +1,8 @@
-# Polyox — NBA Agent 🏀
+# Polyox — NBA SPORTS INTELLIGENCE AGENT Chrome Extension 🏀
 
 AI-powered NBA game analysis on [Polymarket](https://polymarket.com), paid via x402 (Base Sepolia USDC).
+Users on Polymarket NBA pages can open the PolyOx extension to auto-detect the game context. 
+Connect wallet, click "Run Analysis", approve the x402 micropayment signature in MetaMask, and receive instant AI analytics.
 
 ## Install (Chrome / Brave / Edge)
 
