@@ -1,0 +1,16 @@
+{
+  "name": "polyox-chrome",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Chrome extension demo for Ethereum wallet interaction",
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "watch": "node esbuild.config.mjs --watch"
+  },
+  "dependencies": {
+    "viem": "^2.21.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}

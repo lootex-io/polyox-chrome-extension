@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polyox Wallet</title>
+  <link rel="stylesheet" href="popup.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <path d="M14 2L26 14L14 26L2 14L14 2Z" fill="url(#grad)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+          <path d="M14 6L22 14L14 22L6 14L14 6Z" fill="rgba(255,255,255,0.15)"/>
+          <defs><linearGradient id="grad" x1="2" y1="2" x2="26" y2="26"><stop stop-color="#6366f1"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs>
+        </svg>
+        <span class="logo-text">Polyox</span>
+      </div>
+      <span class="badge" id="networkBadge">Mainnet</span>
+    </header>
+
+    <!-- Status Card -->
+    <div class="card" id="statusCard">
+      <div class="status-row">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Detecting wallet…</span>
+      </div>
+    </div>
+
+    <!-- Wallet Info (hidden until connected) -->
+    <div class="card wallet-card hidden" id="walletCard">
+      <div class="info-group">
+        <label class="label">Address</label>
+        <div class="address-row">
+          <span class="address mono" id="addressText">—</span>
+          <button class="copy-btn" id="copyBtn" title="Copy address">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div class="info-group">
+        <label class="label">Balance</label>
+        <div class="balance-row">
+          <span class="balance" id="balanceText">—</span>
+          <span class="balance-unit">ETH</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn btn-primary" id="connectBtn">
+        <span class="btn-content">Connect Wallet</span>
+      </button>
+      <button class="btn btn-secondary hidden" id="signBtn">
+        <span class="btn-content">✍️ Sign Message</span>
+      </button>
+    </div>
+
+    <!-- Signature Result (hidden until signed) -->
+    <div class="card signature-card hidden" id="signatureCard">
+      <label class="label">Signature</label>
+      <div class="signature-box mono" id="signatureText"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <span>Powered by <strong>viem</strong></span>
+    </footer>
+  </div>
+
+  <script src="dist/popup.js"></script>
+</body>
+</html>
