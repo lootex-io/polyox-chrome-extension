@@ -1,5 +1,7 @@
 # Polyox — NBA SPORTS INTELLIGENCE AGENT Chrome Extension 🏀
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 AI-powered NBA game analysis on [Polymarket](https://polymarket.com), paid via x402 (Base Sepolia USDC).
 Users on Polymarket NBA pages can open the PolyOx extension to auto-detect the game context. 
 Connect wallet, click "Run Analysis", approve the x402 micropayment signature in MetaMask, and receive instant AI analytics.
@@ -34,3 +36,11 @@ npm run watch     # rebuild on file changes
 ```
 
 Source files live in `src/`; the build outputs to `dist/`.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

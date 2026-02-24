@@ -1,8 +1,21 @@
 {
   "name": "polyox-chrome",
   "version": "1.0.0",
-  "private": true,
-  "description": "Chrome extension demo for Ethereum wallet interaction",
+  "description": "PolyOx Chrome extension for Polymarket AI prediction",
+  "author": "PolyOx",
+  "license": "MIT",
+  "homepage": "https://polyox.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lootex-io/polyox-chrome-extension.git"
+  },
+  "keywords": [
+    "polyox",
+    "chrome",
+    "extension",
+    "web3",
+    "ai"
+  ],
   "scripts": {
     "build": "node esbuild.config.mjs",
     "watch": "node esbuild.config.mjs --watch"

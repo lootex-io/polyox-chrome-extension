@@ -183,8 +183,6 @@ async function performAnalysis(state) {
     throw new Error(`No accepted payment methods: ${JSON.stringify(paymentReq)}`);
   }
 
-  console.log(paymentReq)
-
   const accept = paymentReq.accepts[0];
   const payTo = accept.payTo;
   const amount = accept.amount;
@@ -335,11 +333,7 @@ async function performAnalysis(state) {
     },
   };
 
-  console.log(paymentPayload)
-
   const paymentSigHeader = safeBase64Encode(JSON.stringify(paymentPayload));
-
-  console.log(paymentSigHeader)
 
   const resAnalysis = await fetch(`${API_BASE}/nba/analysis`, {
     method: 'POST',

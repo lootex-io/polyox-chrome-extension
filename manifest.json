@@ -1,9 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "PolyOx — NBA Agent",
+  "name": "PolyOx",
   "short_name": "PolyOx",
-  "version": "2.0.0",
-  "description": "Get AI-powered NBA game predictions directly on Polymarket. PolyOx detects matchups, runs deep analysis, and delivers win-probability breakdowns — all paid seamlessly with x402 on Base Sepolia USDC.",
+  "version": "1.0.0",
+  "author": "PolyOx",
+  "description": "Specialized AI agents hunting alpha across verticals.",
   "homepage_url": "https://polyox.io",
   "action": {
     "default_popup": "popup.html",
