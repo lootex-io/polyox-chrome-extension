@@ -1,1 +1,17 @@
-node_modules
+# Dependency directories
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Environments
+.env
+
+# Note: dist/ is deliberately strictly tracked for Chrome Extension easy installation
