@@ -39,7 +39,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icon.webp"],
+      "resources": ["icon.png"],
       "matches": ["<all_urls>"]
     }
   ]
