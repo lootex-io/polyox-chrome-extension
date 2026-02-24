@@ -92,7 +92,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
   padding: 5px 10px;
   border: 1px solid var(--border);
   background: var(--green-glow);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--green);
   font-family: var(--font);
@@ -113,7 +113,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
   background: transparent;
   color: var(--green);
   font-family: var(--font);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -183,7 +183,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 .card-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   color: var(--green);
@@ -214,7 +214,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 .team-label {
-  font-size: 8px;
+  font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
   color: var(--text-dim);
@@ -222,7 +222,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 .vs-badge {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-dim);
   padding: 3px 8px;
@@ -232,7 +232,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 
 .game-date {
   margin-top: 8px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-dim);
   text-align: center;
@@ -252,7 +252,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
   justify-content: center;
   height: 40px;
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   border: none;
@@ -293,7 +293,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 /* Payment note */
 .payment-note {
   text-align: center;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-dim);
   letter-spacing: 0.04em;
 }
@@ -308,7 +308,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 .result-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   color: var(--green);
@@ -316,7 +316,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 .result-body {
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.7;
   color: var(--text);
   max-height: 280px;
@@ -330,7 +330,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 .result-body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radius: 2px; }
 
 .result-body h1, .result-body h2, .result-body h3 {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   margin: 12px 0 4px;
   color: var(--green);
@@ -353,7 +353,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 .error-text {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--red);
   word-break: break-word;
 }
@@ -361,7 +361,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 /* ─── Footer ─── */
 .footer {
   text-align: center;
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-dim);
   padding-top: 2px;
   letter-spacing: 0.02em;
@@ -406,7 +406,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 .r-label {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   color: var(--green);
@@ -423,13 +423,13 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 .r-prob-team {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-dim);
 }
 
 .r-prob-pct {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text-dim);
 }
@@ -495,7 +495,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 .r-factors li {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text);
   padding-left: 14px;
   position: relative;
@@ -515,7 +515,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 
 /* Analysis text */
 .r-analysis {
-  font-size: 11px;
+  font-size: 13px;
   line-height: 1.7;
   color: var(--text);
   white-space: normal;
@@ -525,7 +525,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 .r-meta {
   display: flex;
   justify-content: space-between;
-  font-size: 9px;
+  font-size: 11px;
   color: var(--text-dim);
   padding-top: 8px;
   border-top: 1px solid rgba(0, 255, 65, 0.08);
@@ -534,7 +534,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 
 /* Disclaimer */
 .r-disclaimer {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--text-dim);
   margin-top: 8px;
   opacity: 0.6;
