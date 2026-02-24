@@ -6,6 +6,16 @@ AI-powered NBA game analysis on [Polymarket](https://polymarket.com), paid via x
 Users on Polymarket NBA pages can open the PolyOx extension to auto-detect the game context. 
 Connect wallet, click "Run Analysis", approve the x402 micropayment signature in MetaMask, and receive instant AI analytics.
 
+## What is PolyOx?
+
+PolyOx is your intelligent companion for NBA betting on Polymarket. It automatically detects when you're viewing an NBA matchup page and provides deep, AI-driven analysis of the game, helping you make more informed predictions.
+
+### Why Install PolyOx?
+- **Get an Edge:** Access sophisticated AI analysis and win probability predictions directly on the betting page.
+- **Save Time:** No more tabs jumping between stats sites and Polymarket. PolyOx brings the insights to you.
+- **Key Factors Highlighted:** Instantly see the crucial matchups, injuries, and statistical trends that will decide the game.
+- **Seamless Web3 Integration:** Pay for analysis seamlessly using Base Sepolia USDC via the x402 protocol—no subscriptions, just pay-per-insight.
+
 ## Install (Chrome / Brave / Edge)
 
 
