@@ -191,8 +191,84 @@ async function performAnalysis(state) {
   const usdcName = accept.extra?.name || 'USD Coin';
   const usdcVersion = accept.extra?.version || '2';
 
-  // Step 3: Sign EIP-712 TransferWithAuthorization via MetaMask
+  // Step 3: Ensure wallet is on the correct chain (Base Sepolia)
   const tab = await getActiveTab();
+
+  const targetChainHex = '0x' + BASE_SEPOLIA_CHAIN_ID.toString(16);
+
+  // Fire-and-forget switch request, then poll for result (same pattern as signing)
+  await executeInPage(tab.id, (chainHex) => {
+    window.__polyoxSwitchResult = null;
+
+    window.ethereum
+      .request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: chainHex }],
+      })
+      .then(() => {
+        window.__polyoxSwitchResult = { success: true };
+      })
+      .catch((err) => {
+        // 4902 = chain not added to wallet yet
+        if (err.code === 4902) {
+          return window.ethereum
+            .request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: chainHex,
+                chainName: 'Base Sepolia',
+                nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                rpcUrls: ['https://sepolia.base.org'],
+                blockExplorerUrls: ['https://sepolia.basescan.org'],
+              }],
+            })
+            .then(() => {
+              window.__polyoxSwitchResult = { success: true };
+            });
+        }
+        throw err;
+      })
+      .catch((err) => {
+        window.__polyoxSwitchResult = { error: err.message || String(err) };
+      });
+
+    return 'started';
+  }, [targetChainHex]);
+
+  // Poll for switch result
+  await new Promise((resolve, reject) => {
+    let attempts = 0;
+    const maxAttempts = 120; // 60 seconds
+
+    const poll = async () => {
+      attempts++;
+      try {
+        const result = await executeInPage(tab.id, () => window.__polyoxSwitchResult);
+        if (result) {
+          if (result.error) {
+            reject(new Error(`Chain switch failed: ${result.error}`));
+          } else {
+            resolve();
+          }
+          return;
+        }
+      } catch (err) {
+        reject(err);
+        return;
+      }
+
+      if (attempts >= maxAttempts) {
+        reject(new Error('Chain switch timed out'));
+        return;
+      }
+
+      setTimeout(poll, 500);
+    };
+
+    poll();
+  });
+
+  // Step 4: Sign EIP-712 TransferWithAuthorization via MetaMask
 
   // Generate a random nonce (bytes32) — client-side for x402 v2
   const nonceBytes = new Uint8Array(32);
