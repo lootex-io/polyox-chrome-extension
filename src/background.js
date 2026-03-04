@@ -1,13 +1,14 @@
 // ─── Background Service Worker ───
 // Handles: game detection, wallet interactions, x402 payment flow.
-// All state persisted in chrome.storage.session so popup can restore.
+// All state persisted in chrome.storage.session so sidepanel can restore.
 
 import { setIconActive } from './icons.js';
+import { baseSepolia } from 'viem/chains';
+import { numberToHex, toHex } from 'viem';
 
 // ─── Constants ───
 const API_BASE = 'https://api-hoobs.polyox.io';
 const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
-const BASE_SEPOLIA_CHAIN_ID = 84532;
 
 // ─── State helpers ───
 async function getState() {
@@ -214,10 +215,19 @@ async function performAnalysis(state) {
   // Step 3: Ensure wallet is on the correct chain (Base Sepolia)
   const tab = await getActiveTab();
 
-  const targetChainHex = '0x' + BASE_SEPOLIA_CHAIN_ID.toString(16);
+  const targetChainHex = numberToHex(baseSepolia.id);
+
+  // Chain metadata from viem for wallet_addEthereumChain
+  const chainConfig = {
+    chainId: targetChainHex,
+    chainName: baseSepolia.name,
+    nativeCurrency: baseSepolia.nativeCurrency,
+    rpcUrls: [baseSepolia.rpcUrls.default.http[0]],
+    blockExplorerUrls: [baseSepolia.blockExplorers.default.url],
+  };
 
   // Fire-and-forget switch request, then poll for result (same pattern as signing)
-  await executeInPage(tab.id, (chainHex) => {
+  await executeInPage(tab.id, (chainHex, chainCfg) => {
     window.__polyoxSwitchResult = null;
 
     window.ethereum
@@ -234,13 +244,7 @@ async function performAnalysis(state) {
           return window.ethereum
             .request({
               method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: chainHex,
-                chainName: 'Base Sepolia',
-                nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                rpcUrls: ['https://sepolia.base.org'],
-                blockExplorerUrls: ['https://sepolia.basescan.org'],
-              }],
+              params: [chainCfg],
             })
             .then(() => {
               window.__polyoxSwitchResult = { success: true };
@@ -253,7 +257,7 @@ async function performAnalysis(state) {
       });
 
     return 'started';
-  }, [targetChainHex]);
+  }, [targetChainHex, chainConfig]);
 
   // Poll for switch result
   await new Promise((resolve, reject) => {
@@ -293,7 +297,7 @@ async function performAnalysis(state) {
   // Generate a random nonce (bytes32) — client-side for x402 v2
   const nonceBytes = new Uint8Array(32);
   crypto.getRandomValues(nonceBytes);
-  const nonce = '0x' + Array.from(nonceBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  const nonce = toHex(nonceBytes);
 
   const validAfter = 0;
   const validBefore = Math.floor(Date.now() / 1000) + maxTimeout;
@@ -321,7 +325,7 @@ async function performAnalysis(state) {
     domain: {
       name: usdcName,
       version: usdcVersion,
-      chainId: BASE_SEPOLIA_CHAIN_ID,
+      chainId: baseSepolia.id,
       verifyingContract: asset,
     },
     message: {
@@ -406,7 +410,7 @@ async function performAnalysis(state) {
     x402Version: 2,
     accepted: {
       scheme: 'exact',
-      network: 'eip155:84532',
+      network: `eip155:${baseSepolia.id}`,
       payTo,
       amount,
       asset,

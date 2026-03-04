@@ -10,72 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
-  <div class="container">
-    <!-- Header -->
-    <header class="header">
-      <div class="logo">
-        <img src="icon.png" width="20" height="20" alt="PolyOx Logo" />
-        <span class="logo-text"><span class="logo-green">Poly</span>Ox</span>
-      </div>
-      <div class="header-right">
-        <span class="wallet-pill hidden" id="walletPill">
-          <span class="wallet-dot"></span>
-          <span class="wallet-addr" id="walletAddr">—</span>
-        </span>
-        <button class="connect-btn" id="connectBtn">Connect Wallet</button>
-      </div>
-    </header>
-
-    <!-- Divider -->
-    <div class="divider"></div>
-
-    <!-- Game Card -->
-    <div class="card" id="gameCard">
-      <div class="no-game" id="noGame">
-        <div class="no-game-icon">🏀</div>
-        <p>Navigate to a <span class="green">Polymarket NBA game</span> to get started</p>
-      </div>
-      <div class="game-info hidden" id="gameInfo">
-        <div class="card-label">DETECTED MATCHUP</div>
-        <div class="matchup">
-          <div class="team">
-            <span class="team-abbr" id="awayTeam">—</span>
-            <span class="team-label">AWAY</span>
-          </div>
-          <div class="vs-badge">vs</div>
-          <div class="team">
-            <span class="team-abbr" id="homeTeam">—</span>
-            <span class="team-label">HOME</span>
-          </div>
-        </div>
-        <div class="game-date" id="gameDate">—</div>
-      </div>
-    </div>
-
-    <!-- Analyze Button -->
-    <button class="btn btn-primary hidden" id="analyzeBtn">
-      <span class="btn-content">⚡ Run Analysis</span>
-    </button>
-
-    <!-- Analysis Result -->
-    <div class="card result-card hidden" id="resultCard">
-      <div class="result-header">
-        <span class="result-label">ANALYSIS OUTPUT</span>
-      </div>
-      <div class="result-body" id="resultBody"></div>
-    </div>
-
-    <!-- Error -->
-    <div class="card error-card hidden" id="errorCard">
-      <span class="error-text" id="errorText"></span>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <span>PolyOx: <span class="green">Hoops</span></span>
-    </footer>
-  </div>
-
+  <div id="root"></div>
   <script src="dist/sidepanel.js"></script>
 </body>
 </html>
