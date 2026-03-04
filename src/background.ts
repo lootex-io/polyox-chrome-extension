@@ -206,6 +206,44 @@ async function handleMessage(
       }
     }
 
+    // ── Free analysis (no payment) ──
+    case 'analyze-free': {
+      const state = await getState();
+      if (!state.game) throw new Error('No game detected');
+
+      await saveState({
+        analyzing: true,
+        analysisResult: null,
+        analysisError: null,
+      });
+
+      try {
+        const res = await fetch(`${API_BASE}/nba/analysis/free`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            date: state.game.date,
+            home: state.game.home,
+            away: state.game.away,
+          }),
+        });
+
+        if (!res.ok) {
+          const errText = await res.text().catch(() => '');
+          throw new Error(`Free analysis failed (${res.status}): ${errText}`);
+        }
+
+        const result = await res.json();
+        await setCachedAnalysis(state.game, result);
+        await saveState({ analyzing: false, analysisResult: result });
+        return result;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        await saveState({ analyzing: false, analysisError: message });
+        throw err;
+      }
+    }
+
     // ── State ──
     case 'getState': {
       return await getState();

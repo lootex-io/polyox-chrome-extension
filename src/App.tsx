@@ -122,6 +122,25 @@ export default function App() {
     }
   }, []);
 
+  // ─── Free Analyze ───
+  const handleFreeAnalyze = useCallback(async () => {
+    setAnalyzing(true);
+    setState((prev) => ({
+      ...prev,
+      analysisError: null,
+      analysisResult: null,
+    }));
+    try {
+      const result = await sendMsg<AnalysisData>({ action: 'analyze-free' });
+      setState((prev) => ({ ...prev, analysisResult: result }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setState((prev) => ({ ...prev, analysisError: message }));
+    } finally {
+      setAnalyzing(false);
+    }
+  }, []);
+
   const { connected, address, game, analysisResult, analysisError } = state;
 
   return (
@@ -144,7 +163,18 @@ export default function App() {
           disabled={analyzing}
           onClick={handleAnalyze}
         >
-          <span className="btn-content">⚡ Run Analysis</span>
+          <span className="btn-content">Paid Analysis (x402)</span>
+        </button>
+      )}
+
+      {game && (
+        <button
+          type="button"
+          className={`btn btn-secondary${analyzing ? ' loading' : ''}`}
+          disabled={analyzing}
+          onClick={handleFreeAnalyze}
+        >
+          <span className="btn-content">Free Analysis</span>
         </button>
       )}
 

@@ -1,7 +1,9 @@
 /* ─── PolyOx Agent Widget — Brand CSS ─── */
 
 /* Reset */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -15,11 +17,11 @@
   --border-hover: rgba(0, 255, 65, 0.35);
   --text: #e0e0e0;
   --text-dim: #6b6b6b;
-  --green: #00FF41;
+  --green: #00ff41;
   --green-dim: rgba(0, 255, 65, 0.6);
   --green-glow: rgba(0, 255, 65, 0.08);
   --red: #ff4141;
-  --font: 'Geist Mono', 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font: "Geist Mono", "SF Mono", "Fira Code", "Cascadia Code", monospace;
 }
 
 /* ─── Body ─── */
@@ -41,9 +43,16 @@ body {
   background-size: 24px 24px;
 }
 
-body::-webkit-scrollbar { width: 3px; }
-body::-webkit-scrollbar-track { background: transparent; }
-body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radius: 2px; }
+body::-webkit-scrollbar {
+  width: 3px;
+}
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+body::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 65, 0.15);
+  border-radius: 2px;
+}
 
 /* ─── Container ─── */
 .container {
@@ -177,8 +186,14 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .card-label {
@@ -289,6 +304,26 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
   box-shadow: none;
 }
 
+.btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-hover);
+}
+
+.btn-secondary:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* Payment note */
 .payment-note {
   text-align: center;
@@ -322,11 +357,20 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
   word-break: break-word;
 }
 
-.result-body::-webkit-scrollbar { width: 3px; }
-.result-body::-webkit-scrollbar-track { background: transparent; }
-.result-body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radius: 2px; }
+.result-body::-webkit-scrollbar {
+  width: 3px;
+}
+.result-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+.result-body::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 65, 0.15);
+  border-radius: 2px;
+}
 
-.result-body h1, .result-body h2, .result-body h3 {
+.result-body h1,
+.result-body h2,
+.result-body h3 {
   font-size: 13px;
   font-weight: 700;
   margin: 12px 0 4px;
@@ -366,7 +410,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 
 /* ─── Utilities ─── */
 .hidden {
-  display: none !important;
+  display: none;
 }
 
 /* ─── Loading spinner ─── */
@@ -375,7 +419,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 .btn.loading::after {
-  content: '';
+  content: "";
   position: absolute;
   width: 16px;
   height: 16px;
@@ -386,7 +430,9 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ─── Rich Analysis Result ─── */
@@ -500,7 +546,7 @@ body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.15); border-radiu
 }
 
 .r-factors li::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   top: 6px;
