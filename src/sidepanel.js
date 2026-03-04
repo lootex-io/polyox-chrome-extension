@@ -11,7 +11,6 @@ const awayTeam = document.getElementById('awayTeam');
 const homeTeam = document.getElementById('homeTeam');
 const gameDate = document.getElementById('gameDate');
 const analyzeBtn = document.getElementById('analyzeBtn');
-const paymentNote = document.getElementById('paymentNote');
 const resultCard = document.getElementById('resultCard');
 const resultBody = document.getElementById('resultBody');
 const errorCard = document.getElementById('errorCard');
@@ -208,16 +207,13 @@ function renderState(state) {
     // Show analyze button if wallet connected
     if (state.connected) {
       show(analyzeBtn);
-      show(paymentNote);
     } else {
       hide(analyzeBtn);
-      hide(paymentNote);
     }
   } else {
     show(noGame);
     hide(gameInfo);
     hide(analyzeBtn);
-    hide(paymentNote);
   }
 
   // Analysis result
@@ -268,7 +264,6 @@ connectBtn.addEventListener('click', async () => {
     const state = await sendMsg({ action: 'getState' });
     if (state.game) {
       show(analyzeBtn);
-      show(paymentNote);
     }
   } catch (err) {
     showError(err.message);
@@ -296,3 +291,12 @@ analyzeBtn.addEventListener('click', async () => {
 
 // ─── Start ───
 init();
+
+// ─── Reactively update when background changes state ───
+// The side panel persists (unlike the popup which re-inits on every open),
+// so we listen for storage changes to keep the UI in sync.
+chrome.storage.session.onChanged.addListener((changes) => {
+  if (changes.widgetState) {
+    renderState(changes.widgetState.newValue || {});
+  }
+});

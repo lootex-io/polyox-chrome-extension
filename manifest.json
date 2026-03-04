@@ -6,8 +6,10 @@
   "author": "PolyOx",
   "description": "Specialized AI agents hunting alpha across verticals.",
   "homepage_url": "https://polyox.io",
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
   "action": {
-    "default_popup": "popup.html",
     "default_title": "PolyOx Agent",
     "default_icon": {
       "16": "icons/icon-16.png",
@@ -33,9 +35,10 @@
       "run_at": "document_idle"
     }
   ],
-  "permissions": ["activeTab", "scripting", "storage"],
+  "permissions": ["activeTab", "scripting", "storage", "sidePanel"],
   "host_permissions": [
-    "https://api-hoobs.polyox.io/*"
+    "https://api-hoobs.polyox.io/*",
+    "https://polymarket.com/*"
   ],
   "web_accessible_resources": [
     {

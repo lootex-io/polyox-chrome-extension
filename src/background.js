@@ -21,6 +21,22 @@ async function saveState(updates) {
   return newState;
 }
 
+// ─── Analysis cache (persists across side panel toggling) ───
+function gameKey(game) {
+  return `analysis_${game.away}_${game.home}_${game.date}`;
+}
+
+async function getCachedAnalysis(game) {
+  const key = gameKey(game);
+  const data = await chrome.storage.local.get(key);
+  return data[key] || null;
+}
+
+async function setCachedAnalysis(game, result) {
+  const key = gameKey(game);
+  await chrome.storage.local.set({ [key]: result });
+}
+
 // ─── Execute code in the page's main world ───
 async function executeInPage(tabId, func, args = []) {
   const results = await chrome.scripting.executeScript({
@@ -65,7 +81,10 @@ async function handleMessage(message, sender) {
     // ── Game detection (from content script) ──
     case 'detect-game': {
       const { game } = message;
-      await saveState({ game, analysisResult: null });
+
+      // Check for cached analysis for this game
+      const cached = await getCachedAnalysis(game);
+      await saveState({ game, analysisResult: cached, analysisError: null });
       await setIconActive(true);
 
       // Set badge
@@ -117,6 +136,7 @@ async function handleMessage(message, sender) {
 
       try {
         const result = await performAnalysis(state);
+        await setCachedAnalysis(state.game, result);
         await saveState({ analyzing: false, analysisResult: result });
         return result;
       } catch (err) {
@@ -428,5 +448,10 @@ async function performAnalysis(state) {
   return await resAnalysis.json();
 }
 
-// ─── Init: set icon to inactive ───
+// ─── Init ───
+// Open the side panel when the toolbar icon is clicked
+chrome.sidePanel
+  .setPanelBehavior({ openPanelOnActionClick: true })
+  .catch((error) => console.error(error));
+
 setIconActive(false); // fire-and-forget on init
