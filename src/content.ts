@@ -1,14 +1,14 @@
 // Content script — runs on polymarket.com pages
 // Detects NBA game events from the URL and notifies the background worker.
 
-function detectNBAGame() {
+function detectNBAGame(): void {
   const url = window.location.href;
 
   // Match patterns like:
   //   /sports/nba/nba-sas-det-2026-02-23
   //   /event/nba-lal-bos-2025-02-15
   const match = url.match(
-    /polymarket\.com\/(?:sports\/nba|event)\/nba-([a-z]{3})-([a-z]{3})-(\d{4}-\d{2}-\d{2})/i
+    /polymarket\.com\/(?:sports\/nba|event)\/nba-([a-z]{3})-([a-z]{3})-(\d{4}-\d{2}-\d{2})/i,
   );
 
   if (match) {

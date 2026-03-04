@@ -1,4 +1,8 @@
-export default function ErrorCard({ message }) {
+interface ErrorCardProps {
+  message: string;
+}
+
+export default function ErrorCard({ message }: ErrorCardProps) {
   if (!message) return null;
 
   return (

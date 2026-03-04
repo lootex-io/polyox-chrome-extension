@@ -1,4 +1,10 @@
-function formatDate(dateStr) {
+import type { Game } from '../App';
+
+interface GameCardProps {
+  game?: Game | null;
+}
+
+function formatDate(dateStr: string): string {
   try {
     const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString('en-US', {
@@ -12,7 +18,7 @@ function formatDate(dateStr) {
   }
 }
 
-export default function GameCard({ game }) {
+export default function GameCard({ game }: GameCardProps) {
   if (!game) {
     return (
       <div className="card">

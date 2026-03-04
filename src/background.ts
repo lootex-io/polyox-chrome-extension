@@ -2,20 +2,57 @@
 // Handles: game detection, wallet interactions, x402 payment flow.
 // All state persisted in chrome.storage.session so sidepanel can restore.
 
-import { setIconActive } from './icons.js';
-import { baseSepolia } from 'viem/chains';
 import { numberToHex, toHex } from 'viem';
+import { baseSepolia } from 'viem/chains';
+import { setIconActive } from './icons';
 
 // ─── Constants ───
 const API_BASE = 'https://api-hoobs.polyox.io';
 const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e';
 
+// ─── Types ───
+interface Game {
+  away: string;
+  home: string;
+  date: string;
+  url: string;
+}
+
+interface WidgetState {
+  connected?: boolean;
+  address?: string;
+  chainIdHex?: string;
+  walletDetected?: boolean;
+  tabId?: number;
+  game?: Game | null;
+  analysisResult?: unknown;
+  analysisError?: string | null;
+  analyzing?: boolean;
+}
+
+interface Message {
+  action: string;
+  game?: Game;
+  [key: string]: unknown;
+}
+
+interface PaymentAccept {
+  payTo: string;
+  amount: number;
+  asset?: string;
+  maxTimeoutSeconds?: number;
+  extra?: {
+    name?: string;
+    version?: string;
+  };
+}
+
 // ─── State helpers ───
-async function getState() {
+async function getState(): Promise<WidgetState> {
   return (await chrome.storage.session.get('widgetState'))?.widgetState || {};
 }
 
-async function saveState(updates) {
+async function saveState(updates: Partial<WidgetState>): Promise<WidgetState> {
   const current = await getState();
   const newState = { ...current, ...updates };
   await chrome.storage.session.set({ widgetState: newState });
@@ -23,72 +60,87 @@ async function saveState(updates) {
 }
 
 // ─── Analysis cache (persists across side panel toggling) ───
-function gameKey(game) {
+function gameKey(game: Game): string {
   return `analysis_${game.away}_${game.home}_${game.date}`;
 }
 
-async function getCachedAnalysis(game) {
+async function getCachedAnalysis(game: Game): Promise<unknown | null> {
   const key = gameKey(game);
   const data = await chrome.storage.local.get(key);
   return data[key] || null;
 }
 
-async function setCachedAnalysis(game, result) {
+async function setCachedAnalysis(game: Game, result: unknown): Promise<void> {
   const key = gameKey(game);
   await chrome.storage.local.set({ [key]: result });
 }
 
 // ─── Execute code in the page's main world ───
-async function executeInPage(tabId, func, args = []) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function executeInPage<T>(
+  tabId: number,
+  func: (...args: any[]) => T,
+  args: unknown[] = [],
+): Promise<T> {
   const results = await chrome.scripting.executeScript({
     target: { tabId },
     world: 'MAIN',
     func,
     args,
-  });
-  if (results[0]?.error) throw new Error(results[0].error.message);
-  return results[0]?.result;
+  } as any);
+  const frame = results[0];
+  if ('error' in frame) throw new Error((frame.error as Error).message);
+  return frame.result as T;
 }
 
-function safeBase64Encode(data) {
-  if (typeof globalThis !== "undefined" && typeof globalThis.btoa === "function") {
-    const bytes = new TextEncoder().encode(data);
-    const binaryString = Array.from(bytes, byte => String.fromCharCode(byte)).join("");
-    return globalThis.btoa(binaryString);
-  }
-  return Buffer.from(data, "utf8").toString("base64");
+function safeBase64Encode(data: string): string {
+  const bytes = new TextEncoder().encode(data);
+  const binaryString = Array.from(bytes, (byte) =>
+    String.fromCharCode(byte),
+  ).join('');
+  return globalThis.btoa(binaryString);
 }
 
-async function getActiveTab() {
+async function getActiveTab(): Promise<chrome.tabs.Tab> {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || tab.url?.startsWith('chrome://') || tab.url?.startsWith('chrome-extension://')) {
+  if (
+    !tab ||
+    tab.url?.startsWith('chrome://') ||
+    tab.url?.startsWith('chrome-extension://')
+  ) {
     throw new Error('Navigate to a regular webpage first.');
   }
   return tab;
 }
 
 // ─── Message handler ───
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  handleMessage(message, sender)
-    .then((result) => sendResponse({ success: true, data: result }))
-    .catch((err) => sendResponse({ success: false, error: err.message }));
-  return true; // async
-});
+chrome.runtime.onMessage.addListener(
+  (message: Message, sender: chrome.runtime.MessageSender, sendResponse) => {
+    handleMessage(message, sender)
+      .then((result) => sendResponse({ success: true, data: result }))
+      .catch((err: Error) =>
+        sendResponse({ success: false, error: err.message }),
+      );
+    return true; // async
+  },
+);
 
-async function handleMessage(message, sender) {
+async function handleMessage(
+  message: Message,
+  _sender: chrome.runtime.MessageSender,
+): Promise<unknown> {
   const { action } = message;
 
   switch (action) {
     // ── Game detection (from content script) ──
     case 'detect-game': {
       const { game } = message;
+      if (!game) throw new Error('No game data');
 
-      // Check for cached analysis for this game
       const cached = await getCachedAnalysis(game);
       await saveState({ game, analysisResult: cached, analysisError: null });
       await setIconActive(true);
 
-      // Set badge
       chrome.action.setBadgeText({ text: 'NBA' });
       chrome.action.setBadgeBackgroundColor({ color: '#00FF41' });
       return true;
@@ -104,24 +156,27 @@ async function handleMessage(message, sender) {
     // ── Wallet ──
     case 'detect': {
       const tab = await getActiveTab();
-      const hasWallet = await executeInPage(tab.id, () => {
-        return typeof window.ethereum !== 'undefined';
-      });
+      const hasWallet = await executeInPage<boolean>(
+        tab.id!,
+        () => typeof window.ethereum !== 'undefined',
+      );
       await saveState({ walletDetected: hasWallet, tabId: tab.id });
       return hasWallet;
     }
 
     case 'connect': {
       const tab = await getActiveTab();
-      const accounts = await executeInPage(tab.id, () => {
-        return window.ethereum.request({ method: 'eth_requestAccounts' });
-      });
+      const accounts = await executeInPage<string[]>(
+        tab.id!,
+        () => window.ethereum.request({ method: 'eth_requestAccounts' }) as any,
+      );
       if (!accounts?.length) throw new Error('No accounts returned');
 
       const address = accounts[0];
-      const chainIdHex = await executeInPage(tab.id, () => {
-        return window.ethereum.request({ method: 'eth_chainId' });
-      });
+      const chainIdHex = await executeInPage<string>(
+        tab.id!,
+        () => window.ethereum.request({ method: 'eth_chainId' }) as any,
+      );
 
       await saveState({ connected: true, address, chainIdHex });
       return { address, chainIdHex };
@@ -133,7 +188,11 @@ async function handleMessage(message, sender) {
       if (!state.game) throw new Error('No game detected');
       if (!state.address) throw new Error('Connect wallet first');
 
-      await saveState({ analyzing: true, analysisResult: null, analysisError: null });
+      await saveState({
+        analyzing: true,
+        analysisResult: null,
+        analysisError: null,
+      });
 
       try {
         const result = await performAnalysis(state);
@@ -141,7 +200,8 @@ async function handleMessage(message, sender) {
         await saveState({ analyzing: false, analysisResult: result });
         return result;
       } catch (err) {
-        await saveState({ analyzing: false, analysisError: err.message });
+        const message = err instanceof Error ? err.message : String(err);
+        await saveState({ analyzing: false, analysisError: message });
         throw err;
       }
     }
@@ -152,8 +212,11 @@ async function handleMessage(message, sender) {
     }
 
     case 'disconnect': {
-      const state = await getState();
-      await saveState({ connected: false, address: null, chainIdHex: null });
+      await saveState({
+        connected: false,
+        address: undefined,
+        chainIdHex: undefined,
+      });
       return true;
     }
 
@@ -163,8 +226,10 @@ async function handleMessage(message, sender) {
 }
 
 // ─── x402 Analysis Flow ───
-async function performAnalysis(state) {
+async function performAnalysis(state: WidgetState): Promise<unknown> {
   const { game, address } = state;
+  if (!game || !address) throw new Error('Missing game or address');
+
   const body = JSON.stringify({
     date: game.date,
     home: game.home,
@@ -178,7 +243,6 @@ async function performAnalysis(state) {
     body,
   });
 
-  // If it's not 402, maybe it's free or an error
   if (res402.ok) {
     return await res402.json();
   }
@@ -189,19 +253,18 @@ async function performAnalysis(state) {
   }
 
   // Step 2: Parse 402 response (x402 v2 format)
-  // The payment requirements may come from a header or the response body
-  let paymentReq;
+  let paymentReq: { accepts: PaymentAccept[] };
   const paymentRequiredHeader = res402.headers.get('payment-required');
   if (paymentRequiredHeader) {
     paymentReq = JSON.parse(atob(paymentRequiredHeader));
   } else {
-    // x402 v2: requirements are in the response body
     paymentReq = await res402.json();
   }
 
-  // x402 v2: payment details are in accepts[0]
   if (!paymentReq.accepts || !paymentReq.accepts.length) {
-    throw new Error(`No accepted payment methods: ${JSON.stringify(paymentReq)}`);
+    throw new Error(
+      `No accepted payment methods: ${JSON.stringify(paymentReq)}`,
+    );
   }
 
   const accept = paymentReq.accepts[0];
@@ -226,48 +289,56 @@ async function performAnalysis(state) {
     blockExplorerUrls: [baseSepolia.blockExplorers.default.url],
   };
 
-  // Fire-and-forget switch request, then poll for result (same pattern as signing)
-  await executeInPage(tab.id, (chainHex, chainCfg) => {
-    window.__polyoxSwitchResult = null;
+  // Fire-and-forget switch request, then poll for result
+  await executeInPage(
+    tab.id!,
+    (chainHex: unknown, chainCfg: unknown) => {
+      const hex = chainHex as string;
+      const cfg = chainCfg as Record<string, unknown>;
+      window.__polyoxSwitchResult = null;
 
-    window.ethereum
-      .request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: chainHex }],
-      })
-      .then(() => {
-        window.__polyoxSwitchResult = { success: true };
-      })
-      .catch((err) => {
-        // 4902 = chain not added to wallet yet
-        if (err.code === 4902) {
-          return window.ethereum
-            .request({
-              method: 'wallet_addEthereumChain',
-              params: [chainCfg],
-            })
-            .then(() => {
-              window.__polyoxSwitchResult = { success: true };
-            });
-        }
-        throw err;
-      })
-      .catch((err) => {
-        window.__polyoxSwitchResult = { error: err.message || String(err) };
-      });
+      window.ethereum
+        .request({
+          method: 'wallet_switchEthereumChain',
+          params: [{ chainId: hex }],
+        })
+        .then(() => {
+          window.__polyoxSwitchResult = { success: true };
+        })
+        .catch((err: { code?: number; message?: string }) => {
+          if (err.code === 4902) {
+            return window.ethereum
+              .request({
+                method: 'wallet_addEthereumChain',
+                params: [cfg],
+              })
+              .then(() => {
+                window.__polyoxSwitchResult = { success: true };
+              });
+          }
+          throw err;
+        })
+        .catch((err: { message?: string }) => {
+          window.__polyoxSwitchResult = { error: err.message || String(err) };
+        });
 
-    return 'started';
-  }, [targetChainHex, chainConfig]);
+      return 'started';
+    },
+    [targetChainHex, chainConfig],
+  );
 
   // Poll for switch result
-  await new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     let attempts = 0;
-    const maxAttempts = 120; // 60 seconds
+    const maxAttempts = 120;
 
     const poll = async () => {
       attempts++;
       try {
-        const result = await executeInPage(tab.id, () => window.__polyoxSwitchResult);
+        const result = await executeInPage<{
+          success?: boolean;
+          error?: string;
+        } | null>(tab.id!, () => window.__polyoxSwitchResult);
         if (result) {
           if (result.error) {
             reject(new Error(`Chain switch failed: ${result.error}`));
@@ -293,8 +364,6 @@ async function performAnalysis(state) {
   });
 
   // Step 4: Sign EIP-712 TransferWithAuthorization via MetaMask
-
-  // Generate a random nonce (bytes32) — client-side for x402 v2
   const nonceBytes = new Uint8Array(32);
   crypto.getRandomValues(nonceBytes);
   const nonce = toHex(nonceBytes);
@@ -302,8 +371,6 @@ async function performAnalysis(state) {
   const validAfter = 0;
   const validBefore = Math.floor(Date.now() / 1000) + maxTimeout;
 
-  // Build the full typedData string here in the background,
-  // so the injected function is a simple one-liner (like connect).
   const typedData = JSON.stringify({
     types: {
       EIP712Domain: [
@@ -338,50 +405,49 @@ async function performAnalysis(state) {
     },
   });
 
-  // chrome.scripting.executeScript with world:'MAIN' does NOT properly
-  // await Promises that require user interaction (MetaMask popup).
-  // Workaround: fire-and-forget to start the request, then poll for the result.
+  // Fire-and-forget — kick off MetaMask signing
+  await executeInPage(
+    tab.id!,
+    (signer: unknown, data: unknown) => {
+      const signerAddr = signer as string;
+      const typedDataStr = data as string;
+      window.__polyoxSignResult = null;
 
-  // Step A: Fire-and-forget — kick off the MetaMask signing.
-  // This function is SYNCHRONOUS (returns undefined immediately).
-  // MetaMask will open its popup in the background.
-  await executeInPage(tab.id, (signer, data) => {
-    // Clear any previous result
-    window.__polyoxSignResult = null;
+      window.ethereum
+        .request({
+          method: 'eth_signTypedData_v4',
+          params: [signerAddr, typedDataStr],
+        })
+        .then((sig: unknown) => {
+          window.__polyoxSignResult = { signature: sig as string };
+        })
+        .catch((err: { message?: string }) => {
+          window.__polyoxSignResult = { error: err.message || String(err) };
+        });
 
-    window.ethereum
-      .request({
-        method: 'eth_signTypedData_v4',
-        params: [signer, data],
-      })
-      .then((sig) => {
-        window.__polyoxSignResult = { signature: sig };
-      })
-      .catch((err) => {
-        window.__polyoxSignResult = { error: err.message || String(err) };
-      });
+      return 'started';
+    },
+    [address, typedData],
+  );
 
-    // Return immediately — don't wait for MetaMask
-    return 'started';
-  }, [address, typedData]);
-
-  // Step B: Poll for the result every 500ms (up to 5 minutes)
-  const signature = await new Promise((resolve, reject) => {
+  // Poll for signature
+  const signature = await new Promise<string>((resolve, reject) => {
     let attempts = 0;
-    const maxAttempts = 600; // 5 minutes
+    const maxAttempts = 600;
 
     const poll = async () => {
       attempts++;
       try {
-        const result = await executeInPage(tab.id, () => {
-          return window.__polyoxSignResult;
-        });
+        const result = await executeInPage<{
+          signature?: string;
+          error?: string;
+        } | null>(tab.id!, () => window.__polyoxSignResult);
 
         if (result) {
           if (result.error) {
             reject(new Error(result.error));
           } else {
-            resolve(result.signature);
+            resolve(result.signature!);
           }
           return;
         }
@@ -405,7 +471,7 @@ async function performAnalysis(state) {
     throw new Error('Signing failed — no signature returned');
   }
 
-  // Step 4: Build payment payload and retry
+  // Step 5: Build payment payload and retry
   const paymentPayload = {
     x402Version: 2,
     accepted: {
@@ -446,7 +512,9 @@ async function performAnalysis(state) {
 
   if (!resAnalysis.ok) {
     const errText = await resAnalysis.text().catch(() => '');
-    throw new Error(`Analysis request failed (${resAnalysis.status}): ${errText}`);
+    throw new Error(
+      `Analysis request failed (${resAnalysis.status}): ${errText}`,
+    );
   }
 
   return await resAnalysis.json();
@@ -458,4 +526,4 @@ chrome.sidePanel
   .setPanelBehavior({ openPanelOnActionClick: true })
   .catch((error) => console.error(error));
 
-setIconActive(false); // fire-and-forget on init
+setIconActive(false);

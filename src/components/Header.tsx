@@ -1,9 +1,20 @@
-function truncateAddr(addr) {
-  if (!addr) return '—';
+interface HeaderProps {
+  connected?: boolean;
+  address?: string;
+  connecting: boolean;
+  onConnect: () => void;
+}
+
+function truncateAddr(addr: string): string {
   return addr.slice(0, 6) + '…' + addr.slice(-4);
 }
 
-export default function Header({ connected, address, connecting, onConnect }) {
+export default function Header({
+  connected,
+  address,
+  connecting,
+  onConnect,
+}: HeaderProps) {
   return (
     <header className="header">
       <div className="logo">

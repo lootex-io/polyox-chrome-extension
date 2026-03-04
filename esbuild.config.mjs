@@ -3,7 +3,7 @@ import { build, context } from 'esbuild';
 const isWatch = process.argv.includes('--watch');
 
 const config = {
-  entryPoints: ['src/sidepanel.jsx', 'src/background.js', 'src/content.js'],
+  entryPoints: ['src/sidepanel.tsx', 'src/background.ts', 'src/content.ts'],
   bundle: true,
   outdir: 'dist',
   format: 'iife',

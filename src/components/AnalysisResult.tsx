@@ -1,16 +1,19 @@
-function escapeHtml(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+import type { AnalysisData } from '../App';
+
+interface AnalysisResultProps {
+  data: AnalysisData;
 }
 
-function StructuredAnalysis({ data }) {
-  const homeWin = data.homeWinPct || 50;
-  const awayWin = data.awayWinPct || 50;
-  const confidence = data.confidence || 0;
-  const homeName = data.homeTeam || '—';
-  const awayName = data.awayTeam || '—';
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function StructuredAnalysis({ data }: { data: AnalysisData }) {
+  const homeWin = data.homeWinPct ?? 50;
+  const awayWin = data.awayWinPct ?? 50;
+  const confidence = data.confidence ?? 0;
+  const homeName = data.homeTeam ?? '—';
+  const awayName = data.awayTeam ?? '—';
   const favored = homeWin >= awayWin ? 'home' : 'away';
 
   return (
@@ -19,10 +22,14 @@ function StructuredAnalysis({ data }) {
       <div className="r-section">
         <div className="r-label">WIN PROBABILITY</div>
         <div className="r-prob-row">
-          <span className={`r-prob-team ${favored === 'away' ? 'r-favored' : ''}`}>
+          <span
+            className={`r-prob-team ${favored === 'away' ? 'r-favored' : ''}`}
+          >
             {awayName}
           </span>
-          <span className={`r-prob-pct ${favored === 'away' ? 'r-favored' : ''}`}>
+          <span
+            className={`r-prob-pct ${favored === 'away' ? 'r-favored' : ''}`}
+          >
             {awayWin}%
           </span>
         </div>
@@ -30,10 +37,14 @@ function StructuredAnalysis({ data }) {
           <div className="r-bar-fill" style={{ width: `${awayWin}%` }} />
         </div>
         <div className="r-prob-row" style={{ marginTop: 6 }}>
-          <span className={`r-prob-team ${favored === 'home' ? 'r-favored' : ''}`}>
+          <span
+            className={`r-prob-team ${favored === 'home' ? 'r-favored' : ''}`}
+          >
             {homeName}
           </span>
-          <span className={`r-prob-pct ${favored === 'home' ? 'r-favored' : ''}`}>
+          <span
+            className={`r-prob-pct ${favored === 'home' ? 'r-favored' : ''}`}
+          >
             {homeWin}%
           </span>
         </div>
@@ -47,14 +58,17 @@ function StructuredAnalysis({ data }) {
         <div className="r-label">CONFIDENCE</div>
         <div className="r-confidence">
           <div className="r-conf-bar-track">
-            <div className="r-conf-bar-fill" style={{ width: `${confidence}%` }} />
+            <div
+              className="r-conf-bar-fill"
+              style={{ width: `${confidence}%` }}
+            />
           </div>
           <span className="r-conf-value">{confidence}%</span>
         </div>
       </div>
 
       {/* Key Factors */}
-      {data.keyFactors?.length > 0 && (
+      {data.keyFactors && data.keyFactors.length > 0 && (
         <div className="r-section">
           <div className="r-label">KEY FACTORS</div>
           <ul className="r-factors">
@@ -87,23 +101,22 @@ function StructuredAnalysis({ data }) {
       </div>
 
       {/* Disclaimer */}
-      {data.disclaimer && (
-        <div className="r-disclaimer">{data.disclaimer}</div>
-      )}
+      {data.disclaimer && <div className="r-disclaimer">{data.disclaimer}</div>}
     </>
   );
 }
 
-function FallbackAnalysis({ data }) {
+function FallbackAnalysis({ data }: { data: AnalysisData }) {
   let content = '';
   if (typeof data === 'string') {
     content = data;
   } else if (data?.analysis) {
     content = data.analysis;
   } else if (data?.result) {
-    content = typeof data.result === 'string'
-      ? data.result
-      : JSON.stringify(data.result, null, 2);
+    content =
+      typeof data.result === 'string'
+        ? data.result
+        : JSON.stringify(data.result, null, 2);
   } else {
     content = JSON.stringify(data, null, 2);
   }
@@ -118,10 +131,11 @@ function FallbackAnalysis({ data }) {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-export default function AnalysisResult({ data }) {
+export default function AnalysisResult({ data }: AnalysisResultProps) {
   if (!data) return null;
 
-  const isStructured = data && typeof data === 'object' && data.homeWinPct !== undefined;
+  const isStructured =
+    data && typeof data === 'object' && data.homeWinPct !== undefined;
 
   return (
     <div className="card result-card">

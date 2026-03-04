@@ -2,15 +2,19 @@
 // Active  → full-opacity icon + green dot (bottom-right)
 // Inactive → semi-transparent icon + gray dot (bottom-right)
 
-async function loadIconBitmap() {
+async function loadIconBitmap(): Promise<ImageBitmap> {
   const res = await fetch(chrome.runtime.getURL('icon.webp'));
   const blob = await res.blob();
   return createImageBitmap(blob);
 }
 
-function createIcon(bitmap, size, active) {
+function createIcon(
+  bitmap: ImageBitmap,
+  size: number,
+  active: boolean,
+): ImageData {
   const canvas = new OffscreenCanvas(size, size);
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d')!;
 
   // Draw the icon, dimmed when inactive
   if (!active) {
@@ -39,14 +43,14 @@ function createIcon(bitmap, size, active) {
   return ctx.getImageData(0, 0, size, size);
 }
 
-let cachedBitmap = null;
+let cachedBitmap: ImageBitmap | null = null;
 
-export async function setIconActive(active) {
+export async function setIconActive(active: boolean): Promise<void> {
   if (!cachedBitmap) {
     cachedBitmap = await loadIconBitmap();
   }
 
-  const imageData = {};
+  const imageData: Record<number, ImageData> = {};
   for (const size of [16, 32, 48, 128]) {
     imageData[size] = createIcon(cachedBitmap, size, active);
   }

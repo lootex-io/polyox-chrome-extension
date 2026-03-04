@@ -18,7 +18,11 @@
   ],
   "scripts": {
     "build": "node esbuild.config.mjs",
-    "watch": "node esbuild.config.mjs --watch"
+    "watch": "node esbuild.config.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src/",
+    "lint:fix": "biome check --write src/",
+    "format": "biome format --write src/"
   },
   "dependencies": {
     "react": "^19.2.4",
@@ -26,6 +30,11 @@
     "viem": "^2.21.0"
   },
   "devDependencies": {
-    "esbuild": "^0.24.0"
+    "@biomejs/biome": "^2.4.5",
+    "@types/chrome": "^0.1.37",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.9.3"
   }
 }
