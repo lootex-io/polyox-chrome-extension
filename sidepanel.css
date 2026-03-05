@@ -94,8 +94,9 @@ body::-webkit-scrollbar-thumb {
   display: flex;
   border-top: 1px solid var(--border);
   background: var(--surface);
-  height: 54px;
+  height: 64px;
   flex-shrink: 0;
+  padding: 8px;
 }
 
 .nav-btn {
@@ -128,7 +129,7 @@ body::-webkit-scrollbar-thumb {
 
 .nav-label {
   font-family: var(--font);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -139,7 +140,7 @@ body::-webkit-scrollbar-thumb {
   border: none;
   color: var(--green);
   font-family: var(--font);
-  font-size: 11px;
+  font-size: 14px;
   cursor: pointer;
   text-decoration: underline;
   text-decoration-color: transparent;
@@ -160,7 +161,7 @@ body::-webkit-scrollbar-thumb {
 .logo {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .logo-text {
@@ -297,6 +298,7 @@ body::-webkit-scrollbar-thumb {
 
 .minimized-actions {
   display: flex;
+  flex-direction: row;
   gap: 6px;
 }
 
@@ -489,7 +491,7 @@ body::-webkit-scrollbar-thumb {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
-  color: var(--green);
+  color: var(--text-dim);
   text-transform: uppercase;
 }
 
@@ -518,7 +520,7 @@ body::-webkit-scrollbar-thumb {
   font-size: 13px;
   font-weight: 700;
   margin: 12px 0 4px;
-  color: var(--green);
+  color: var(--text);
   letter-spacing: 0.02em;
 }
 
@@ -527,7 +529,8 @@ body::-webkit-scrollbar-thumb {
 }
 
 .result-body strong {
-  color: var(--green-dim);
+  color: var(--text);
+  font-weight: 600;
 }
 
 /* ─── Error Card ─── */
@@ -587,9 +590,71 @@ body::-webkit-scrollbar-thumb {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
-  color: var(--green);
+  color: var(--text-dim);
   margin-bottom: 8px;
   text-transform: uppercase;
+}
+
+/* Prediction card */
+.r-prediction-card {
+  background: rgba(0, 255, 65, 0.03);
+  border: 1px solid var(--border);
+  padding: 16px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.r-pred-header {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.r-pred-winner {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--green);
+  text-shadow: 0 0 12px rgba(0, 255, 65, 0.3);
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+
+.r-pred-winner-sub {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+}
+
+.r-pred-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  border-top: 1px solid rgba(0, 255, 65, 0.1);
+  padding-top: 12px;
+}
+
+.r-pred-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.r-pred-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.r-pred-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
 }
 
 /* Win probability */
@@ -597,7 +662,7 @@ body::-webkit-scrollbar-thumb {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 3px;
+  margin-bottom: 4px;
 }
 
 .r-prob-team {
@@ -613,55 +678,31 @@ body::-webkit-scrollbar-thumb {
 }
 
 .r-prob-team.r-favored {
-  color: var(--green);
+  color: var(--text);
+  font-weight: 600;
 }
 
 .r-prob-pct.r-favored {
-  color: var(--green);
-  text-shadow: 0 0 8px rgba(0, 255, 65, 0.3);
+  color: var(--text);
 }
 
 .r-bar-track {
   height: 4px;
   background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
   overflow: hidden;
 }
 
 .r-bar-fill {
   height: 100%;
+  background: var(--text-dim);
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.r-bar-fill.r-favored {
   background: var(--green);
   box-shadow: 0 0 8px rgba(0, 255, 65, 0.4);
-  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Confidence */
-.r-confidence {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.r-conf-bar-track {
-  flex: 1;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  overflow: hidden;
-}
-
-.r-conf-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--green), rgba(0, 255, 65, 0.5));
-  box-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
-  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.r-conf-value {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--green);
-  min-width: 36px;
-  text-align: right;
-  text-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
 }
 
 /* Key factors */
@@ -684,11 +725,12 @@ body::-webkit-scrollbar-thumb {
   content: "";
   position: absolute;
   left: 0;
-  top: 6px;
+  top: 7px;
   width: 4px;
   height: 4px;
   background: var(--green);
-  box-shadow: 0 0 4px rgba(0, 255, 65, 0.5);
+  opacity: 0.6;
+  border-radius: 50%;
 }
 
 /* Analysis text */
@@ -777,4 +819,10 @@ body::-webkit-scrollbar-thumb {
 .history-card-date {
   font-size: 11px;
   color: var(--text-dim);
+}
+
+.tab-game {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }

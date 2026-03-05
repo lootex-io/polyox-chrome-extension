@@ -1,26 +1,53 @@
-import type { AnalysisData } from '../App';
+import type { AnalysisData, Game } from '../App';
 
 interface AnalysisResultProps {
   data: AnalysisData;
+  game?: Game | null;
 }
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function StructuredAnalysis({ data }: { data: AnalysisData }) {
+function StructuredAnalysis({
+  data,
+  game,
+}: {
+  data: AnalysisData;
+  game?: Game | null;
+}) {
   const homeWin = data.homeWinPct ?? 50;
   const awayWin = data.awayWinPct ?? 50;
   const confidence = data.confidence ?? 0;
   const homeName = data.homeTeam ?? '—';
   const awayName = data.awayTeam ?? '—';
   const favored = homeWin >= awayWin ? 'home' : 'away';
+  const winnerName = favored === 'home' ? homeName : awayName;
+  const winnerCode = favored === 'home' ? game?.home : game?.away;
+  const winnerProb = favored === 'home' ? homeWin : awayWin;
 
   return (
     <>
-      {/* Win Probability */}
+      {/* Explicit Prediction Card */}
+      <div className="r-prediction-card">
+        <div className="r-pred-header">PREDICTED OUTCOME</div>
+        <div className="r-pred-winner">{winnerCode || winnerName}</div>
+        {winnerCode && <div className="r-pred-winner-sub">{winnerName}</div>}
+        <div className="r-pred-stats">
+          <div className="r-pred-stat">
+            <span className="r-pred-label">Win Probability</span>
+            <span className="r-pred-value">{winnerProb}%</span>
+          </div>
+          <div className="r-pred-stat">
+            <span className="r-pred-label">Confidence</span>
+            <span className="r-pred-value">{confidence}%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Probability Breakdown */}
       <div className="r-section">
-        <div className="r-label">WIN PROBABILITY</div>
+        <div className="r-label">BREAKDOWN</div>
         <div className="r-prob-row">
           <span
             className={`r-prob-team ${favored === 'away' ? 'r-favored' : ''}`}
@@ -34,9 +61,12 @@ function StructuredAnalysis({ data }: { data: AnalysisData }) {
           </span>
         </div>
         <div className="r-bar-track">
-          <div className="r-bar-fill" style={{ width: `${awayWin}%` }} />
+          <div
+            className={`r-bar-fill ${favored === 'away' ? 'r-favored' : ''}`}
+            style={{ width: `${awayWin}%` }}
+          />
         </div>
-        <div className="r-prob-row" style={{ marginTop: 6 }}>
+        <div className="r-prob-row" style={{ marginTop: 10 }}>
           <span
             className={`r-prob-team ${favored === 'home' ? 'r-favored' : ''}`}
           >
@@ -49,21 +79,10 @@ function StructuredAnalysis({ data }: { data: AnalysisData }) {
           </span>
         </div>
         <div className="r-bar-track">
-          <div className="r-bar-fill" style={{ width: `${homeWin}%` }} />
-        </div>
-      </div>
-
-      {/* Confidence */}
-      <div className="r-section">
-        <div className="r-label">CONFIDENCE</div>
-        <div className="r-confidence">
-          <div className="r-conf-bar-track">
-            <div
-              className="r-conf-bar-fill"
-              style={{ width: `${confidence}%` }}
-            />
-          </div>
-          <span className="r-conf-value">{confidence}%</span>
+          <div
+            className={`r-bar-fill ${favored === 'home' ? 'r-favored' : ''}`}
+            style={{ width: `${homeWin}%` }}
+          />
         </div>
       </div>
 
@@ -131,7 +150,7 @@ function FallbackAnalysis({ data }: { data: AnalysisData }) {
   return <div dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-export default function AnalysisResult({ data }: AnalysisResultProps) {
+export default function AnalysisResult({ data, game }: AnalysisResultProps) {
   if (!data) return null;
 
   const isStructured =
@@ -140,11 +159,11 @@ export default function AnalysisResult({ data }: AnalysisResultProps) {
   return (
     <div className="card result-card">
       <div className="result-header">
-        <span className="result-label">ANALYSIS OUTPUT</span>
+        <span className="card-label">ANALYSIS RESULT</span>
       </div>
       <div className="result-body">
         {isStructured ? (
-          <StructuredAnalysis data={data} />
+          <StructuredAnalysis data={data} game={game} />
         ) : (
           <FallbackAnalysis data={data} />
         )}

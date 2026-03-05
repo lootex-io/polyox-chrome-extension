@@ -126,16 +126,24 @@ function parseGameFromUrl(url: string): Game | null {
 async function redetectGame(tabId: number) {
   try {
     const tab = await chrome.tabs.get(tabId);
+
+    // Ignore updates from extension popups (like MetaMask) or devtools
     if (
       !tab.url ||
-      tab.url.startsWith('chrome://') ||
-      tab.url.startsWith('chrome-extension://')
+      tab.url.startsWith('chrome-extension://') ||
+      tab.url.startsWith('devtools://')
     ) {
+      return;
+    }
+
+    // If it's a Chrome settings page, clear it, because it's definitely not a game
+    if (tab.url.startsWith('chrome://')) {
       await saveState({ game: null, analysisResult: null });
       await setIconActive(false);
       chrome.action.setBadgeText({ text: '' });
       return;
     }
+
     const game = parseGameFromUrl(tab.url);
     if (game) {
       const cached = await getCachedAnalysis(game);
@@ -153,13 +161,22 @@ async function redetectGame(tabId: number) {
   }
 }
 
-chrome.tabs.onActivated.addListener(({ tabId }) => {
-  redetectGame(tabId);
+chrome.tabs.onActivated.addListener(({ tabId, windowId }) => {
+  // Only redetect if the window is a normal browser window to avoid popup issues
+  chrome.windows.get(windowId, (win) => {
+    if (win.type === 'normal') {
+      redetectGame(tabId);
+    }
+  });
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && tab.active) {
-    redetectGame(tabId);
+    chrome.windows.get(tab.windowId, (win) => {
+      if (win.type === 'normal') {
+        redetectGame(tabId);
+      }
+    });
   }
 });
 

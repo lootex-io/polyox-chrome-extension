@@ -1,3 +1,4 @@
+import { ChartLineIcon, ChevronLeftIcon, ScrollTextIcon } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import AnalysisResult from './components/AnalysisResult';
 import ErrorCard from './components/ErrorCard';
@@ -199,59 +200,50 @@ export default function App() {
 
       <main className="main-content">
         {currentTab === 'game' && (
-          <div className="tab-game">
-            <GameCard
-              game={game}
-              connected={connected}
-              analyzing={analyzing}
-              onConnect={handleConnect}
-              onAnalyze={handleAnalyze}
-              onFreeAnalyze={handleFreeAnalyze}
-            />
-
-            {game && !analyzing && (
+          <div className="tab-game" style={{ height: '100%' }}>
+            {game ? (
+              <GameCard
+                game={game}
+                connected={connected}
+                analyzing={analyzing}
+                onConnect={handleConnect}
+                onAnalyze={handleAnalyze}
+                onFreeAnalyze={handleFreeAnalyze}
+              />
+            ) : (
               <div
-                className="card"
                 style={{
-                  marginTop: 12,
-                  textAlign: 'center',
-                  padding: '20px 0',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flex: 1,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: '100%',
                 }}
               >
-                <p style={{ color: 'var(--text-dim)', marginBottom: 12 }}>
-                  {state.analysisResult ? 'Re-run analysis' : 'Run analysis'}{' '}
-                  for {game.away} vs {game.home}
-                </p>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                    padding: '0 16px',
-                  }}
-                >
-                  <button
-                    type="button"
-                    className={`btn btn-primary${analyzing ? ' loading' : ''}`}
-                    disabled={analyzing}
-                    onClick={handleAnalyze}
-                  >
-                    Paid Analysis (x402)
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn btn-secondary${analyzing ? ' loading' : ''}`}
-                    disabled={analyzing}
-                    onClick={handleFreeAnalyze}
-                  >
-                    Free Analysis
-                  </button>
+                <div className="card">
+                  <div className="no-game">
+                    <div className="no-game-icon">🏀</div>
+                    <p>
+                      Navigate to a{' '}
+                      <a
+                        href="https://polymarket.com/sports/nba/games"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="green"
+                        style={{ textDecoration: 'underline' }}
+                      >
+                        Polymarket NBA game
+                      </a>{' '}
+                      to get started
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
 
             {state.analysisResult && (
-              <AnalysisResult data={state.analysisResult} />
+              <AnalysisResult data={state.analysisResult} game={game} />
             )}
           </div>
         )}
@@ -265,45 +257,42 @@ export default function App() {
               <HistoryList sendMsg={sendMsg} onSelect={handleSelectHistory} />
             ) : (
               <>
+                {/* Back button */}
                 <div
-                  className="card card-minimized"
-                  style={{ marginBottom: 12 }}
+                  style={{
+                    marginBottom: 12,
+                    textAlign: 'left',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                  }}
                 >
-                  <div className="minimized-header" style={{ width: '100%' }}>
-                    <div
-                      className="card-label"
-                      style={{
-                        marginBottom: 4,
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <span>VIEWING MATCHUP</span>
-                      <button
-                        type="button"
-                        className="text-link"
-                        onClick={() => setViewingHistory(true)}
-                      >
-                        View History
-                      </button>
-                    </div>
-                    <div className="minimized-matchup">
+                  <button
+                    type="button"
+                    className="text-link"
+                    onClick={() => setViewingHistory(true)}
+                    style={{ display: 'flex', alignItems: 'center' }}
+                  >
+                    <ChevronLeftIcon />
+                    <span>
                       <span className="green">{activeAnalysis.game.away}</span>{' '}
-                      vs{' '}
+                      <span style={{ color: 'var(--text-dim)' }}>vs</span>{' '}
                       <span className="green">{activeAnalysis.game.home}</span>
-                    </div>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        color: 'var(--text-dim)',
-                        marginTop: 2,
-                      }}
-                    >
-                      {activeAnalysis.game.date}
-                    </div>
+                    </span>
+                  </button>
+                  <div
+                    style={{
+                      fontSize: 11,
+                      color: 'var(--text-dim)',
+                      marginTop: 2,
+                    }}
+                  >
+                    {activeAnalysis.game.date}
                   </div>
                 </div>
-                <AnalysisResult data={activeAnalysis.data} />
+                <AnalysisResult
+                  data={activeAnalysis.data}
+                  game={activeAnalysis.game}
+                />
               </>
             )}
           </div>
@@ -322,19 +311,19 @@ export default function App() {
           className={`nav-btn ${currentTab === 'game' ? 'active' : ''}`}
           onClick={() => setCurrentTab('game')}
         >
-          <span className="nav-icon">🏀</span>
-          <span className="nav-label">Game</span>
+          <ChartLineIcon size={20} />
+          <span className="nav-label">Matchups</span>
         </button>
         <button
           type="button"
           className={`nav-btn ${currentTab === 'analysis' ? 'active' : ''}`}
           onClick={() => {
             setCurrentTab('analysis');
-            if (!activeAnalysis) setViewingHistory(true);
+            setViewingHistory(true);
           }}
         >
-          <span className="nav-icon">📊</span>
-          <span className="nav-label">Analysis</span>
+          <ScrollTextIcon size={20} />
+          <span className="nav-label">My Analysis</span>
         </button>
       </nav>
     </div>

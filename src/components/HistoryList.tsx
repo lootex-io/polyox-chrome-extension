@@ -59,8 +59,8 @@ export default function HistoryList({ onSelect, sendMsg }: HistoryListProps) {
         {history.map((item, _i) => {
           const { game, analysis } = item;
           // Favored team styling for history card
-          const homeWin = analysis.homeWinPct ?? 50;
-          const awayWin = analysis.awayWinPct ?? 50;
+          const _homeWin = analysis.homeWinPct ?? 50;
+          const _awayWin = analysis.awayWinPct ?? 50;
 
           return (
             <button
@@ -70,13 +70,9 @@ export default function HistoryList({ onSelect, sendMsg }: HistoryListProps) {
               type="button"
             >
               <div className="history-card-teams">
-                <span className={awayWin > homeWin ? 'green' : ''}>
-                  {game.away}
-                </span>
+                <span className="green">{game.away}</span>
                 <span className="history-card-vs">vs</span>
-                <span className={homeWin > awayWin ? 'green' : ''}>
-                  {game.home}
-                </span>
+                <span className="green">{game.home}</span>
               </div>
               <div className="history-card-date">
                 {formatDateDisplay(game.date)}

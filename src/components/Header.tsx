@@ -18,7 +18,7 @@ export default function Header({
   return (
     <header className="header" style={{ flexShrink: 0 }}>
       <div className="logo">
-        <img src="icon.png" width="20" height="20" alt="PolyOx Logo" />
+        <img src="icon.png" width="24" height="24" alt="PolyOx Logo" />
         <span className="logo-text">
           <span className="logo-green">Poly</span>Ox
         </span>

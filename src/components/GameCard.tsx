@@ -34,69 +34,14 @@ export default function GameCard({
   onFreeAnalyze,
 }: GameCardProps) {
   if (!game) {
-    return (
-      <div className="card">
-        <div className="no-game">
-          <div className="no-game-icon">🏀</div>
-          <p>
-            Navigate to a <span className="green">Polymarket NBA game</span> to
-            get started
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (minimized) {
-    return (
-      <div className="card card-minimized">
-        <div className="minimized-header">
-          <div className="card-label" style={{ marginBottom: 0 }}>
-            CURRENT MATCHUP
-          </div>
-          <div className="minimized-matchup">
-            <span className="green">{game.away}</span> vs{' '}
-            <span className="green">{game.home}</span>
-          </div>
-        </div>
-        <div className="minimized-actions">
-          {connected ? (
-            <button
-              type="button"
-              className={`btn btn-primary mini-btn${analyzing ? ' loading' : ''}`}
-              disabled={analyzing}
-              onClick={onAnalyze}
-            >
-              <span className="btn-content">Paid</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              className={`btn btn-primary mini-btn${analyzing ? ' loading' : ''}`}
-              disabled={analyzing}
-              onClick={onConnect}
-            >
-              <span className="btn-content">Connect</span>
-            </button>
-          )}
-          <button
-            type="button"
-            className={`btn btn-secondary mini-btn${analyzing ? ' loading' : ''}`}
-            disabled={analyzing}
-            onClick={onFreeAnalyze}
-          >
-            <span className="btn-content">Free</span>
-          </button>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // Normal big view
   return (
     <div className="card">
       <div className="game-info">
-        <div className="card-label">DETECTED MATCHUP</div>
+        <div className="card-label">MATCHUP</div>
         <div className="matchup">
           <div className="team">
             <span className="team-abbr">{game.away}</span>
@@ -109,6 +54,32 @@ export default function GameCard({
           </div>
         </div>
         <div className="game-date">{formatDate(game.date)}</div>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          gap: 8,
+          marginTop: 12,
+        }}
+      >
+        <button
+          type="button"
+          className={`btn btn-primary${analyzing ? ' loading' : ''}`}
+          disabled={analyzing}
+          onClick={onAnalyze}
+        >
+          Pro Analysis
+        </button>
+        <button
+          type="button"
+          className={`btn btn-secondary${analyzing ? ' loading' : ''}`}
+          disabled={analyzing}
+          onClick={onFreeAnalyze}
+        >
+          Free Analysis
+        </button>
       </div>
     </div>
   );
