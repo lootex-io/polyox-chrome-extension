@@ -72,8 +72,8 @@ function StructuredAnalysis({ data }: { data: AnalysisData }) {
         <div className="r-section">
           <div className="r-label">KEY FACTORS</div>
           <ul className="r-factors">
-            {data.keyFactors.map((factor, i) => (
-              <li key={i}>{factor}</li>
+            {data.keyFactors.map((factor) => (
+              <li key={factor.substring(0, 30)}>{factor}</li>
             ))}
           </ul>
         </div>

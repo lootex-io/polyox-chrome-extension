@@ -6,7 +6,7 @@ interface HeaderProps {
 }
 
 function truncateAddr(addr: string): string {
-  return addr.slice(0, 6) + '…' + addr.slice(-4);
+  return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
 }
 
 export default function Header({
@@ -16,7 +16,7 @@ export default function Header({
   onConnect,
 }: HeaderProps) {
   return (
-    <header className="header">
+    <header className="header" style={{ flexShrink: 0 }}>
       <div className="logo">
         <img src="icon.png" width="20" height="20" alt="PolyOx Logo" />
         <span className="logo-text">
@@ -31,6 +31,7 @@ export default function Header({
           </span>
         ) : (
           <button
+            type="button"
             className={`connect-btn${connecting ? ' loading' : ''}`}
             disabled={connecting}
             onClick={onConnect}

@@ -113,6 +113,56 @@ async function getActiveTab(): Promise<chrome.tabs.Tab> {
   return tab;
 }
 
+// ─── Re-detect game when user switches tabs or navigates ───
+function parseGameFromUrl(url: string): Game | null {
+  const match = url.match(
+    /polymarket\.com\/(?:sports\/nba|event)\/nba-([a-z]{3})-([a-z]{3})-(\d{4}-\d{2}-\d{2})/i,
+  );
+  if (!match) return null;
+  const [, away, home, date] = match;
+  return { away: away.toUpperCase(), home: home.toUpperCase(), date, url };
+}
+
+async function redetectGame(tabId: number) {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    if (
+      !tab.url ||
+      tab.url.startsWith('chrome://') ||
+      tab.url.startsWith('chrome-extension://')
+    ) {
+      await saveState({ game: null, analysisResult: null });
+      await setIconActive(false);
+      chrome.action.setBadgeText({ text: '' });
+      return;
+    }
+    const game = parseGameFromUrl(tab.url);
+    if (game) {
+      const cached = await getCachedAnalysis(game);
+      await saveState({ game, analysisResult: cached, analysisError: null });
+      await setIconActive(true);
+      chrome.action.setBadgeText({ text: 'NBA' });
+      chrome.action.setBadgeBackgroundColor({ color: '#00FF41' });
+    } else {
+      await saveState({ game: null, analysisResult: null });
+      await setIconActive(false);
+      chrome.action.setBadgeText({ text: '' });
+    }
+  } catch {
+    // Tab may have been closed or is not scriptable
+  }
+}
+
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+  redetectGame(tabId);
+});
+
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.active) {
+    redetectGame(tabId);
+  }
+});
+
 // ─── Message handler ───
 chrome.runtime.onMessage.addListener(
   (message: Message, sender: chrome.runtime.MessageSender, sendResponse) => {
@@ -242,6 +292,38 @@ async function handleMessage(
         await saveState({ analyzing: false, analysisError: message });
         throw err;
       }
+    }
+
+    // ── History ──
+    case 'get-history': {
+      const allData = await chrome.storage.local.get(null);
+      const history = [];
+      for (const [key, value] of Object.entries(allData)) {
+        if (key.startsWith('analysis_')) {
+          // Parse game details from key: analysis_AWAY_HOME_DATE
+          const parts = key.split('_');
+          if (parts.length >= 4) {
+            const away = parts[1];
+            const home = parts[2];
+            const date = parts.slice(3).join('_');
+            history.push({
+              game: { away, home, date },
+              analysis: value,
+            });
+          }
+        }
+      }
+      // Sort by latest generatedAt if available, otherwise fallback
+      history.sort((a, b) => {
+        const tA = (a.analysis as any)?.generatedAt
+          ? new Date((a.analysis as any).generatedAt).getTime()
+          : 0;
+        const tB = (b.analysis as any)?.generatedAt
+          ? new Date((b.analysis as any).generatedAt).getTime()
+          : 0;
+        return tB - tA; // descending
+      });
+      return history;
     }
 
     // ── State ──
