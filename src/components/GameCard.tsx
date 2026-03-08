@@ -1,3 +1,4 @@
+import { RefreshCwIcon } from 'lucide-react';
 import type { Game, GameContext } from '../App';
 
 interface GameCardProps {
@@ -10,6 +11,7 @@ interface GameCardProps {
   onConnect?: () => void;
   onAnalyze?: () => void;
   onFreeAnalyze?: () => void;
+  onReloadContext?: () => void;
 }
 
 function formatDate(dateStr: string): string {
@@ -76,6 +78,7 @@ export default function GameCard({
   analyzing,
   onAnalyze,
   onFreeAnalyze,
+  onReloadContext,
 }: GameCardProps) {
   if (!game) {
     return null;
@@ -130,8 +133,19 @@ export default function GameCard({
 
       {!loadingContext && statsRows && statsRows.length > 0 && (
         <div className="stats-section">
-          <div className="stats-label">
-            RECENT FORM (L{homeStats?.gamesPlayed ?? 10})
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div className="stats-label" style={{ marginBottom: 0 }}>
+              RECENT FORM (L{homeStats?.gamesPlayed ?? 10})
+            </div>
+            <button
+              type="button"
+              className="context-reload-btn"
+              onClick={onReloadContext}
+              disabled={loadingContext}
+              title="Refresh stats and injury data"
+            >
+              <RefreshCwIcon size={11} />
+            </button>
           </div>
           <table className="stats-table">
             <thead>

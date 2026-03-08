@@ -138,12 +138,24 @@ export default function App() {
   // ─── Fetch game context (stats + injuries) when game changes ───
   useEffect(() => {
     if (!state.game) return;
-    if (state.gameContext) return; // already loaded
+    if (state.gameContext) return; // already loaded from cache
     setLoadingContext(true);
     sendMsg<GameContext>({ action: 'fetch-game-context' })
       .catch(() => null)
       .finally(() => setLoadingContext(false));
   }, [state.game, state.gameContext]);
+
+  // ─── Reload game context (force refresh) ───
+  const handleReloadContext = useCallback(async () => {
+    setLoadingContext(true);
+    try {
+      await sendMsg<GameContext>({ action: 'reload-game-context' });
+    } catch {
+      // ignore
+    } finally {
+      setLoadingContext(false);
+    }
+  }, []);
 
   // ─── Connect wallet ───
   const handleConnect = useCallback(async () => {
@@ -244,6 +256,7 @@ export default function App() {
                 onConnect={handleConnect}
                 onAnalyze={handleAnalyze}
                 onFreeAnalyze={handleFreeAnalyze}
+                onReloadContext={handleReloadContext}
               />
             ) : (
               <div

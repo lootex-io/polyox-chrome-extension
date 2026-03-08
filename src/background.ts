@@ -97,6 +97,22 @@ async function setCachedAnalysis(game: Game, result: unknown): Promise<void> {
   await chrome.storage.local.set({ [key]: result });
 }
 
+// ─── Game context cache ───
+function contextKey(game: Game): string {
+  return `context_${game.away}_${game.home}_${game.date}`;
+}
+
+async function getCachedContext(game: Game): Promise<GameContext | null> {
+  const key = contextKey(game);
+  const data = await chrome.storage.local.get(key);
+  return (data[key] as GameContext) || null;
+}
+
+async function setCachedContext(game: Game, ctx: GameContext): Promise<void> {
+  const key = contextKey(game);
+  await chrome.storage.local.set({ [key]: ctx });
+}
+
 // ─── Execute code in the page's main world ───
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function executeInPage<T>(
@@ -169,7 +185,8 @@ async function redetectGame(tabId: number) {
     const game = parseGameFromUrl(tab.url);
     if (game) {
       const cached = await getCachedAnalysis(game);
-      await saveState({ game, gameContext: null, analysisResult: cached, analysisError: null });
+      const cachedContext = await getCachedContext(game);
+      await saveState({ game, gameContext: cachedContext, analysisResult: cached, analysisError: null });
       await setIconActive(true);
       chrome.action.setBadgeText({ text: 'NBA' });
       chrome.action.setBadgeBackgroundColor({ color: '#00FF41' });
@@ -227,7 +244,8 @@ async function handleMessage(
       if (!game) throw new Error('No game data');
 
       const cached = await getCachedAnalysis(game);
-      await saveState({ game, gameContext: null, analysisResult: cached, analysisError: null });
+      const cachedContext = await getCachedContext(game);
+      await saveState({ game, gameContext: cachedContext, analysisResult: cached, analysisError: null });
       await setIconActive(true);
 
       chrome.action.setBadgeText({ text: 'NBA' });
@@ -334,6 +352,7 @@ async function handleMessage(
     }
 
     // ── Game context (team stats + injuries) ──
+    case 'reload-game-context':
     case 'fetch-game-context': {
       const state = await getState();
       if (!state.game) throw new Error('No game detected');
@@ -402,6 +421,7 @@ async function handleMessage(
         awayInjuries: filterInjuries(awayTeam.id),
       };
 
+      await setCachedContext(state.game, gameContext);
       await saveState({ gameContext });
       return gameContext;
     }
