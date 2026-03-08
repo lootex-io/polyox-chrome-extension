@@ -14,6 +14,27 @@ export interface Game {
   url: string;
 }
 
+export interface TeamAvgStats {
+  pts: number;
+  reb: number;
+  ast: number;
+  offRtg: number;
+  defRtg: number;
+  gamesPlayed: number;
+}
+
+export interface InjuryPlayer {
+  playerName: string;
+  status: string;
+}
+
+export interface GameContext {
+  homeStats: TeamAvgStats;
+  awayStats: TeamAvgStats;
+  homeInjuries: InjuryPlayer[];
+  awayInjuries: InjuryPlayer[];
+}
+
 export interface AnalysisData {
   homeWinPct?: number;
   awayWinPct?: number;
@@ -35,6 +56,7 @@ export interface WidgetState {
   walletDetected?: boolean;
   tabId?: number;
   game?: Game | null;
+  gameContext?: GameContext | null;
   analysisResult?: AnalysisData | null;
   analysisError?: string | null;
   analyzing?: boolean;
@@ -69,6 +91,7 @@ export default function App() {
   const [state, setState] = useState<WidgetState>({});
   const [connecting, setConnecting] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
+  const [loadingContext, setLoadingContext] = useState(false);
 
   // New UI State
   const [currentTab, setCurrentTab] = useState<'game' | 'analysis'>('game');
@@ -111,6 +134,16 @@ export default function App() {
     chrome.storage.session.onChanged.addListener(listener);
     return () => chrome.storage.session.onChanged.removeListener(listener);
   }, []);
+
+  // ─── Fetch game context (stats + injuries) when game changes ───
+  useEffect(() => {
+    if (!state.game) return;
+    if (state.gameContext) return; // already loaded
+    setLoadingContext(true);
+    sendMsg<GameContext>({ action: 'fetch-game-context' })
+      .catch(() => null)
+      .finally(() => setLoadingContext(false));
+  }, [state.game, state.gameContext]);
 
   // ─── Connect wallet ───
   const handleConnect = useCallback(async () => {
@@ -204,6 +237,8 @@ export default function App() {
             {game ? (
               <GameCard
                 game={game}
+                gameContext={state.gameContext}
+                loadingContext={loadingContext}
                 connected={connected}
                 analyzing={analyzing}
                 onConnect={handleConnect}

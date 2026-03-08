@@ -826,3 +826,134 @@ body::-webkit-scrollbar-thumb {
   flex-direction: column;
   gap: 12px;
 }
+
+/* ─── Game Stats ─── */
+.stats-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 255, 65, 0.08);
+}
+
+.stats-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.stats-loading {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.06em;
+  text-align: center;
+  opacity: 0.6;
+}
+
+.stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.stats-th {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--green);
+  padding: 0 0 6px;
+  text-transform: uppercase;
+}
+
+.stats-th-stat {
+  text-align: left;
+  width: 40%;
+}
+
+.stats-th-team {
+  text-align: right;
+  width: 30%;
+}
+
+.stats-td {
+  padding: 3px 0;
+  vertical-align: middle;
+}
+
+.stats-td-label {
+  font-size: 11px;
+  color: var(--text);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.stats-td-val {
+  text-align: right;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.stats-td-val.stats-td-better {
+  color: var(--green);
+  font-weight: 700;
+}
+
+/* ─── Injuries ─── */
+.injuries-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 255, 65, 0.08);
+}
+
+.injuries-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.injury-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.injury-col-header {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--green);
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.injury-none {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.injury-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  line-height: 1.4;
+}
+
+.injury-status {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  min-width: 26px;
+}
+
+.injury-name {
+  font-size: 11px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

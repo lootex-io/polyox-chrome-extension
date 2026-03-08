@@ -18,6 +18,27 @@ interface Game {
   url: string;
 }
 
+interface TeamAvgStats {
+  pts: number;
+  reb: number;
+  ast: number;
+  offRtg: number;
+  defRtg: number;
+  gamesPlayed: number;
+}
+
+interface InjuryPlayer {
+  playerName: string;
+  status: string;
+}
+
+interface GameContext {
+  homeStats: TeamAvgStats;
+  awayStats: TeamAvgStats;
+  homeInjuries: InjuryPlayer[];
+  awayInjuries: InjuryPlayer[];
+}
+
 interface WidgetState {
   connected?: boolean;
   address?: string;
@@ -25,6 +46,7 @@ interface WidgetState {
   walletDetected?: boolean;
   tabId?: number;
   game?: Game | null;
+  gameContext?: GameContext | null;
   analysisResult?: unknown;
   analysisError?: string | null;
   analyzing?: boolean;
@@ -138,7 +160,7 @@ async function redetectGame(tabId: number) {
 
     // If it's a Chrome settings page, clear it, because it's definitely not a game
     if (tab.url.startsWith('chrome://')) {
-      await saveState({ game: null, analysisResult: null });
+      await saveState({ game: null, gameContext: null, analysisResult: null });
       await setIconActive(false);
       chrome.action.setBadgeText({ text: '' });
       return;
@@ -147,12 +169,12 @@ async function redetectGame(tabId: number) {
     const game = parseGameFromUrl(tab.url);
     if (game) {
       const cached = await getCachedAnalysis(game);
-      await saveState({ game, analysisResult: cached, analysisError: null });
+      await saveState({ game, gameContext: null, analysisResult: cached, analysisError: null });
       await setIconActive(true);
       chrome.action.setBadgeText({ text: 'NBA' });
       chrome.action.setBadgeBackgroundColor({ color: '#00FF41' });
     } else {
-      await saveState({ game: null, analysisResult: null });
+      await saveState({ game: null, gameContext: null, analysisResult: null });
       await setIconActive(false);
       chrome.action.setBadgeText({ text: '' });
     }
@@ -205,7 +227,7 @@ async function handleMessage(
       if (!game) throw new Error('No game data');
 
       const cached = await getCachedAnalysis(game);
-      await saveState({ game, analysisResult: cached, analysisError: null });
+      await saveState({ game, gameContext: null, analysisResult: cached, analysisError: null });
       await setIconActive(true);
 
       chrome.action.setBadgeText({ text: 'NBA' });
@@ -214,7 +236,7 @@ async function handleMessage(
     }
 
     case 'clear-game': {
-      await saveState({ game: null, analysisResult: null });
+      await saveState({ game: null, gameContext: null, analysisResult: null });
       await setIconActive(false);
       chrome.action.setBadgeText({ text: '' });
       return true;
@@ -309,6 +331,79 @@ async function handleMessage(
         await saveState({ analyzing: false, analysisError: message });
         throw err;
       }
+    }
+
+    // ── Game context (team stats + injuries) ──
+    case 'fetch-game-context': {
+      const state = await getState();
+      if (!state.game) throw new Error('No game detected');
+
+      const { home, away } = state.game;
+
+      // Resolve team abbreviations to IDs
+      const teamsRes = await fetch(`${API_BASE}/nba/teams`);
+      const teams: Array<{ id: string; abbrev: string }> =
+        await teamsRes.json();
+
+      const homeTeam = teams.find((t) => t.abbrev === home);
+      const awayTeam = teams.find((t) => t.abbrev === away);
+      if (!homeTeam || !awayTeam) throw new Error('Teams not found');
+
+      // Fetch stats and injuries in parallel
+      const [homeStatsRes, awayStatsRes, injuryRes] = await Promise.all([
+        fetch(`${API_BASE}/nba/team-stats?teamId=${homeTeam.id}&pageSize=10`),
+        fetch(`${API_BASE}/nba/team-stats?teamId=${awayTeam.id}&pageSize=10`),
+        fetch(`${API_BASE}/nba/injury-reports/latest?pageSize=500`),
+      ]);
+
+      const homeStatsData = await homeStatsRes.json();
+      const awayStatsData = await awayStatsRes.json();
+      const injuryData = await injuryRes.json();
+
+      const computeAvg = (
+        games: Record<string, number | null>[],
+      ): TeamAvgStats => {
+        if (!games.length)
+          return {
+            pts: 0,
+            reb: 0,
+            ast: 0,
+            offRtg: 0,
+            defRtg: 0,
+            gamesPlayed: 0,
+          };
+        const n = games.length;
+        const avg = (key: string) =>
+          games.reduce((s, g) => s + (Number(g[key]) || 0), 0) / n;
+        return {
+          pts: avg('pts'),
+          reb: avg('reb'),
+          ast: avg('ast'),
+          offRtg: avg('offRtg'),
+          defRtg: avg('defRtg'),
+          gamesPlayed: n,
+        };
+      };
+
+      const homeStats = computeAvg(homeStatsData.data || []);
+      const awayStats = computeAvg(awayStatsData.data || []);
+
+      const injuries: Record<string, string>[] =
+        injuryData.entries?.data || injuryData.data || [];
+      const filterInjuries = (teamId: string): InjuryPlayer[] =>
+        injuries
+          .filter((e) => e.teamId === teamId && e.status !== 'Available')
+          .map((e) => ({ playerName: e.playerName, status: e.status }));
+
+      const gameContext: GameContext = {
+        homeStats,
+        awayStats,
+        homeInjuries: filterInjuries(homeTeam.id),
+        awayInjuries: filterInjuries(awayTeam.id),
+      };
+
+      await saveState({ gameContext });
+      return gameContext;
     }
 
     // ── History ──
